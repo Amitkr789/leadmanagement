@@ -6,8 +6,8 @@
     <div class="page-header">
       <div>
         <span class="breadcrumb-eyebrow">Access</span>
-        <h1>Access Pannel</h1>
-        <p>Create and manage administrator accounts with secure role-based access.</p>
+        <h1>Access Panel</h1>
+        <p>Create and manage the users of your company with secure role-based access.</p>
       </div>
       <div class="page-header-actions d-flex gap-2">
         <button class="btn btn-primary" id="openAddUserBtn" data-bs-toggle="modal" data-bs-target="#adduserModal">
@@ -61,11 +61,11 @@
 <div class="modal fade modal-lg" id="adduserModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <form id="addLeadForm">
+      <form id="addLeadForm" autocomplete="off">
         <input type="hidden" id="alId" value="">
         <div class="modal-header">
-          <h5 class="modal-title" id="userModalTitle">Add new User</h5>
-          <button type="button" class="btn-close mx-3" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title" id="userModalTitle">Add new user</h5>
+          <button type="button" class="btn-close mx-3" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="row g-3">
@@ -78,20 +78,22 @@
               <label class="form-label fs-13 fw-600">Email</label>
               <input type="email" class="form-control" id="alEmail" placeholder="name@company.com" required>
               <div class="invalid-feedback d-block text-danger fs-12" id="err_email"></div>
+              <small class="text-muted fs-11">This email is also used for "Continue with Google".</small>
             </div>
             <div class="col-6">
               <label class="form-label fs-13 fw-600">Phone</label>
               <input type="text" class="form-control" id="alPhone" placeholder="+1 555 000 0000">
+              <div class="invalid-feedback d-block text-danger fs-12" id="err_phone"></div>
             </div>
             <div class="col-6">
               <label class="form-label fs-13 fw-600">Password</label>
-              <input type="password" class="form-control" id="alPassword" placeholder="Min 6 characters">
+              <input type="password" class="form-control" id="alPassword" placeholder="Min 8 characters" autocomplete="new-password">
               <div class="invalid-feedback d-block text-danger fs-12" id="err_password"></div>
-              <small class="text-muted fs-11" id="editPassHint" style="display:none;">Blank chhodo agar change nahi karna.</small>
+              <small class="text-muted fs-11" id="editPassHint" style="display:none;">Leave blank to keep the current password.</small>
             </div>
             <div class="col-6">
               <label class="form-label fs-13 fw-600">Re-enter password</label>
-              <input type="password" class="form-control" id="alConfirmPassword" placeholder="Re-enter password">
+              <input type="password" class="form-control" id="alConfirmPassword" placeholder="Re-enter password" autocomplete="new-password">
             </div>
             <div class="col-12">
               <label class="form-label fs-13 fw-600">Role</label>
@@ -99,6 +101,8 @@
                 <option value="admin">Admin</option>
                 <option value="super_admin">Super Admin</option>
               </select>
+              <div class="invalid-feedback d-block text-danger fs-12" id="err_role"></div>
+              <small class="text-muted fs-11" id="selfRoleHint" style="display:none;">You cannot change your own role.</small>
             </div>
           </div>
         </div>
@@ -110,11 +114,13 @@
     </div>
   </div>
 </div>
+
 <script>
-  $(function () {
-  const BASE = '/admin/users';
+$(function () {
+  const BASE  = '/admin/users';
+  const ME_ID = {{ (int) auth('admin')->id() }};
   let currentPage = 1;
-  let perPage = 10;
+  const perPage = 10;
   let selectedIds = new Set();
 
   // CSRF setup for all AJAX calls
@@ -145,29 +151,39 @@
   }
 
   function renderTable(users) {
+    selectedIds.clear();
+    $('#selectAllCheck').prop('checked', false);
+    updateBulkBar();
+
     if (!users.length) {
       $('#leadsTbody').html('<tr><td colspan="8" class="text-center py-4">No users found.</td></tr>');
       return;
     }
-    let rows = users.map(u => `
+
+    const rows = users.map(u => {
+      const isMe   = Number(u.id) === ME_ID;
+      const google = u.google_linked_at ? '<i class="bi bi-google ms-1 text-muted" title="Google sign-in linked"></i>' : '';
+
+      return `
       <tr data-id="${u.id}">
-        <td><input type="checkbox" class="form-check-input row-check" value="${u.id}"></td>
-        <td>${escapeHtml(u.name)}</td>
-        <td>${escapeHtml(u.email)}</td>
-        <td>${u.phone ?? '-'}</td>
+        <td>${isMe ? '' : `<input type="checkbox" class="form-check-input row-check" value="${u.id}">`}</td>
+        <td>${escapeHtml(u.name)}${isMe ? ' <span class="badge text-bg-light">You</span>' : ''}</td>
+        <td>${escapeHtml(u.email)}${google}</td>
+        <td>${escapeHtml(u.phone ?? '-')}</td>
         <td><span class="badge-status">${u.role === 'super_admin' ? 'Super Admin' : 'Admin'}</span></td>
         <td>
           <div class="form-check form-switch m-0">
-            <input class="form-check-input status-toggle" type="checkbox" data-id="${u.id}" ${u.status === 'active' ? 'checked' : ''}>
+            <input class="form-check-input status-toggle" type="checkbox" data-id="${u.id}" ${u.status === 'active' ? 'checked' : ''} ${isMe ? 'disabled' : ''}>
           </div>
         </td>
         <td>${new Date(u.created_at).toLocaleDateString()}</td>
         <td class="text-end">
-          <button class="btn btn-sm btn-light-soft edit-btn" data-id="${u.id}"><i class="bi bi-pencil"></i></button>
-          <button class="btn btn-sm btn-light-soft text-danger delete-btn" data-id="${u.id}"><i class="bi bi-trash"></i></button>
+          <button class="btn btn-sm btn-light-soft edit-btn" data-id="${u.id}" aria-label="Edit"><i class="bi bi-pencil"></i></button>
+          ${isMe ? '' : `<button class="btn btn-sm btn-light-soft text-danger delete-btn" data-id="${u.id}" aria-label="Delete"><i class="bi bi-trash"></i></button>`}
         </td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
+
     $('#leadsTbody').html(rows);
   }
 
@@ -187,7 +203,7 @@
   // ---------- ADD ----------
   $('#openAddUserBtn').on('click', function () {
     resetForm();
-    $('#userModalTitle').text('Add new User');
+    $('#userModalTitle').text('Add new user');
     $('#saveUserBtn').text('Add User');
     $('#editPassHint').hide();
     $('#alPassword, #alConfirmPassword').attr('required', true);
@@ -204,7 +220,12 @@
       $('#alEmail').val(u.email);
       $('#alPhone').val(u.phone);
       $('#alRole').val(u.role);
-      $('#userModalTitle').text('Edit User');
+
+      const isMe = Number(u.id) === ME_ID;
+      $('#alRole').prop('disabled', isMe);
+      $('#selfRoleHint').toggle(isMe);
+
+      $('#userModalTitle').text('Edit user');
       $('#saveUserBtn').text('Update User');
       $('#editPassHint').show();
       $('#alPassword, #alConfirmPassword').removeAttr('required');
@@ -212,7 +233,7 @@
     }).fail(() => alert('Could not load user.'));
   });
 
-  // ---------- ADD/UPDATE SUBMIT ----------
+  // ---------- ADD / UPDATE SUBMIT ----------
   $('#addLeadForm').on('submit', function (e) {
     e.preventDefault();
     clearErrors();
@@ -232,25 +253,23 @@
       return;
     }
 
-    const url = id ? `${BASE}/${id}` : BASE;
+    const url    = id ? `${BASE}/${id}` : BASE;
     const method = id ? 'PUT' : 'POST';
 
     $('#saveUserBtn').prop('disabled', true).text('Saving...');
 
     $.ajax({
       url, method, data: payload,
-      success: function (res) {
+      success: function () {
         bootstrap.Modal.getInstance(document.getElementById('adduserModal')).hide();
         loadUsers(currentPage);
       },
       error: function (xhr) {
-        if (xhr.status === 422) {
+        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
           const errors = xhr.responseJSON.errors;
-          Object.keys(errors).forEach(field => {
-            $(`#err_${field}`).text(errors[field][0]);
-          });
+          Object.keys(errors).forEach(field => $(`#err_${field}`).text(errors[field][0]));
         } else {
-          alert(xhr.responseJSON?.message || 'Something went wrong.');
+          alert((xhr.responseJSON && xhr.responseJSON.message) || 'Something went wrong.');
         }
       },
       complete: function () {
@@ -273,7 +292,7 @@
       },
       error: function (xhr) {
         $toggle.prop('checked', !$toggle.is(':checked')); // revert
-        alert(xhr.responseJSON?.message || 'Failed to update status.');
+        alert((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to update status.');
       },
       complete: function () {
         $toggle.prop('disabled', false);
@@ -290,7 +309,7 @@
       url: `${BASE}/${id}`,
       method: 'DELETE',
       success: () => loadUsers(currentPage),
-      error: (xhr) => alert(xhr.responseJSON?.message || 'Delete failed.')
+      error: (xhr) => alert((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.')
     });
   });
 
@@ -333,7 +352,7 @@
         updateBulkBar();
         loadUsers(1);
       },
-      error: (xhr) => alert(xhr.responseJSON?.message || 'Bulk delete failed.')
+      error: (xhr) => alert((xhr.responseJSON && xhr.responseJSON.message) || 'Bulk delete failed.')
     });
   });
 
@@ -341,6 +360,8 @@
   function resetForm() {
     $('#addLeadForm')[0].reset();
     $('#alId').val('');
+    $('#alRole').prop('disabled', false);
+    $('#selfRoleHint').hide();
     clearErrors();
   }
 
@@ -353,5 +374,4 @@
   }
 });
 </script>
-
 @endsection

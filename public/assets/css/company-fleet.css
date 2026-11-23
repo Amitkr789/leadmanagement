@@ -1,0 +1,52 @@
+/* Company > Drivers, Vehicles, Assignments, Document expiry. Uses the same tokens and patterns as the team pages. */
+.row-link { cursor: pointer; } .row-link:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: -2px; }
+.live-box { transition: opacity .15s; } .live-box.is-loading { opacity: .5; pointer-events: none; }
+
+/* Expiry colours: expired red, within 30 days orange, within 90 days yellow, valid green */
+.tone-orange { background: #FFEDD5; color: #C2410C; } .tone-yellow { background: #FEF9C3; color: #A16207; } .tone-muted { background: #F1F4F9; color: #6B7280; }
+.exp-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: #CBD5E1; }
+.exp-dot.tone-danger { background: var(--mp-danger); } .exp-dot.tone-orange { background: #F97316; } .exp-dot.tone-yellow { background: #EAB308; } .exp-dot.tone-success { background: var(--mp-success); }
+.fl-count { border-radius: 12px; padding: .55rem .3rem; } .fl-count b { display: block; font-size: 1.3rem; line-height: 1.1; } .fl-count span { font-size: .7rem; font-weight: 600; }
+.fl-on { border-color: var(--mp-primary) !important; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+
+/* Avatars and photos */
+.fl-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: none; border: 1px solid var(--mp-border); } .fl-avatar.is-square { border-radius: 10px; }
+.fl-ico { background: var(--mp-primary-soft); color: var(--mp-primary); width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; }
+.fl-photo { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--mp-border); display: grid; place-items: center; font-size: 1.8rem; } .fl-photo.is-square { border-radius: 16px; width: 120px; }
+.hist-row { display: flex; justify-content: space-between; gap: .6rem; padding: .45rem 0; border-bottom: 1px solid var(--mp-border); font-size: .86rem; } .hist-row:last-child { border-bottom: 0; }
+
+/* Document tiles */
+.doc-tile { display: flex; align-items: center; gap: .8rem; }
+.doc-thumb { width: 72px; height: 54px; border-radius: 10px; border: 1px solid var(--mp-border); background: #F7F9FD; display: grid; place-items: center; overflow: hidden; flex: none; color: var(--mp-primary); font-size: 1.6rem; text-decoration: none; }
+.doc-thumb img { width: 100%; height: 100%; object-fit: cover; } .doc-thumb.is-empty { color: #CBD5E1; border-style: dashed; }
+
+/* Long forms: sticky section list + section cards + sticky save bar */
+.fl-nav { position: sticky; top: calc(var(--mp-topbar-h) + 1rem); display: grid; gap: .15rem; }
+.fl-nav a { display: flex; align-items: center; gap: .6rem; padding: .55rem .8rem; border-radius: 10px; color: var(--mp-muted); text-decoration: none; font-weight: 500; font-size: .88rem; }
+.fl-nav a:hover { background: #fff; color: var(--mp-text); } .fl-nav a.is-on { background: var(--mp-primary-soft); color: var(--mp-primary); font-weight: 600; }
+.fl-section { background: #fff; border: 1px solid var(--mp-border); border-radius: 18px; padding: 1.4rem; margin-bottom: 1rem; scroll-margin-top: 90px; }
+.fl-title { display: flex; align-items: center; gap: .6rem; font-size: 1rem; font-weight: 700; margin-bottom: 1.1rem; } .fl-title i { width: 32px; height: 32px; display: grid; place-items: center; background: var(--mp-primary-soft); color: var(--mp-primary); border-radius: 10px; }
+.fl-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: .6rem; padding: .9rem 0; background: linear-gradient(to top, var(--mp-bg) 70%, transparent); z-index: 5; }
+.file-existing { display: flex; align-items: center; gap: .6rem; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: .45rem .7rem; margin-bottom: .5rem; }
+.file-preview { margin-top: .5rem; } .file-preview img { max-height: 90px; border-radius: 10px; border: 1px solid var(--mp-border); } .file-preview .small { color: var(--mp-muted); }
+
+/* Cashfree fetch box */
+.cf-box { background: var(--mp-primary-soft); border: 1px solid #C7D6FB; border-radius: 14px; padding: .9rem 1rem; margin-bottom: 1.1rem; } .cf-box.is-locked { background: #F7F9FD; border-color: var(--mp-border); color: var(--mp-muted); font-size: .86rem; }
+.cf-panel { margin-top: .8rem; background: #fff; border: 1px solid var(--mp-border); border-radius: 12px; padding: .8rem; } .cf-panel table { width: 100%; font-size: .84rem; } .cf-panel td { padding: .25rem .3rem; border-bottom: 1px solid var(--mp-border); } .cf-panel tr:last-child td { border-bottom: 0; }
+.fl-filled { background-color: #F0FDF4 !important; border-color: #86EFAC !important; }
+
+/* Filter pills (expiry page) */
+.prov-pills { display: flex; flex-wrap: wrap; gap: .4rem; }
+.prov-pill { display: inline-flex; align-items: center; gap: .4rem; border: 1.5px solid var(--mp-border); background: #fff; color: #374151; font-size: .84rem; font-weight: 600; border-radius: 999px; padding: .35rem .8rem; text-decoration: none; }
+.prov-pill:hover { border-color: #C3CCDD; } .prov-pill.is-on { background: var(--mp-primary-soft); border-color: var(--mp-primary); color: var(--mp-primary); }
+
+@media (max-width: 991.98px) { .fl-actions { bottom: 72px; } }
+@media (max-width: 767.98px) { .fl-section { padding: 1.1rem; border-radius: 16px; } .fl-photo { width: 72px; height: 72px; } }
+@media (prefers-reduced-motion: reduce) { .live-box { transition: none; } }
+
+/* Print the driver / vehicle profile cleanly */
+@media print {
+  .app-sidebar, .app-topbar, .bottom-nav, .no-print, .toast-wrap { display: none !important; }
+  .app-main { margin: 0 !important; } .app-content { padding: 0 !important; } body { background: #fff !important; }
+  .mp-card { break-inside: avoid; box-shadow: none !important; } a { color: inherit !important; text-decoration: none !important; }
+}

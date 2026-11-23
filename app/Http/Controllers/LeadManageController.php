@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
+use App\Models\Company;
+use App\Models\Contact;
 use App\Models\Lead;
 use App\Models\LeadAttachment;
 use App\Models\LeadReminder;
@@ -43,7 +45,9 @@ class LeadManageController extends Controller
 
        Reminders aur Attachments dono per-admin scoped hai: super_admin
        sab dekhta hai, baaki sirf apna khud ka (jo unhone create/upload
-       kiya ho), even if lead khud shared/assigned hai. */
+       kiya ho), even if lead khud shared/assigned hai. Reminders yahan
+       type ('reminder' ya 'note') dono ke saath aate hai — front-end
+       (lead.blade.php) inhe do alag sections me split karta hai. */
 
     public function data()
     {
@@ -53,6 +57,8 @@ class LeadManageController extends Controller
             ->with([
                 'creator:id,name',
                 'assignedAdmins:id,name',
+                'contact:id,name,email,phone,whatsapp,company_id',
+                'company:id,name,website,phone,gst_number,address',
                 'reminders' => fn ($q) => $q->visibleTo($admin),
                 'attachments' => fn ($q) => $q->visibleTo($admin)->with('uploader:id,name'),
             ])
@@ -68,25 +74,57 @@ class LeadManageController extends Controller
         ]);
     }
 
-    /* ==================== CREATE ==================== */
+    /* ==================== CREATE ====================
+       A lead is created FROM a contact (and optionally a company):
+         - contact_id            → use that contact (must be visible to the admin)
+         - or customer_name+phone → find a contact with the same phone, otherwise create one
+       The contact's name / phone / e-mail / WhatsApp and the company's name are copied onto the
+       lead row, so reminders, bills, the share card and the alarm popup keep working as before. */
 
     public function store(Request $request)
     {
-        $validator = $this->leadValidator($request);
+        $validator = $this->leadValidator($request, true);
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors(), 'message' => $validator->errors()->first()], 422);
         }
 
-        $lead = DB::transaction(function () use ($request) {
+        $admin = $this->currentAdmin();
+
+        $lead = DB::transaction(function () use ($request, $admin) {
+            if ($request->filled('contact_id')) {
+                $contact = Contact::visibleTo($admin)->findOrFail($request->contact_id);
+            } else {
+                $key     = Contact::phoneKey($request->phone);
+                $contact = $key ? Contact::visibleTo($admin)->where('phone_key', $key)->first() : null;
+                $contact ??= Contact::create([
+                    'name'       => trim($request->customer_name),
+                    'email'      => $request->email ?: null,
+                    'phone'      => $request->phone,
+                    'whatsapp'   => $request->whatsapp ?: null,
+                    'created_by' => $admin->id,
+                ]);
+            }
+
+            $company = $request->filled('company_id') ? Company::visibleTo($admin)->findOrFail($request->company_id) : ($contact->company_id ? Company::find($contact->company_id) : null);
+
+            if ($company && !$contact->company_id) {
+                $contact->update(['company_id' => $company->id]);
+            }
+
             $lead = Lead::create([
-                'customer_name' => $request->customer_name,
-                'product_name' => $request->product_name,
-                'whatsapp' => $request->whatsapp,
-                'phone' => $request->phone,
-                'source' => $request->source,
+                'customer_name'   => $contact->name,
+                'email'           => $contact->email,
+                'phone'           => $contact->phone ?? '',
+                'whatsapp'        => $contact->whatsapp,
+                'contact_id'      => $contact->id,
+                'company_id'      => $company?->id,
+                'company_name'    => $company?->name,
+                'gst_number'      => $company?->gst_number,
+                'product_name'    => $request->product_name ?? '',
+                'source'          => $request->source,
                 'social_platform' => $request->source === 'Social Media' ? $request->social_platform : null,
-                'lead_type' => $request->lead_type,
-                'created_by' => $this->currentAdmin()->id,
+                'lead_type'       => $request->lead_type,
+                'created_by'      => $admin->id,
             ]);
 
             $lead->assignedAdmins()->sync($request->input('assigned_admins', []));
@@ -94,7 +132,7 @@ class LeadManageController extends Controller
             return $lead;
         });
 
-        $lead->load(['creator:id,name', 'assignedAdmins:id,name']);
+        $lead->load($this->leadRelations());
 
         return response()->json(['success' => true, 'message' => 'Lead added successfully.', 'lead' => $lead]);
     }
@@ -112,7 +150,7 @@ class LeadManageController extends Controller
 
         $lead->update([
             'customer_name' => $request->customer_name,
-            'product_name' => $request->product_name,
+            'product_name' => $request->product_name ?? '',
             'whatsapp' => $request->whatsapp,
             'phone' => $request->phone,
             'source' => $request->source,
@@ -120,25 +158,149 @@ class LeadManageController extends Controller
             'lead_type' => $request->lead_type,
         ]);
 
+        $this->syncContactFromLead($lead, $request->only(['customer_name', 'phone', 'whatsapp']) + ($request->has('email') ? ['email' => $request->email] : []));
+
         $lead->assignedAdmins()->sync($request->input('assigned_admins', []));
-        $lead->load(['creator:id,name', 'assignedAdmins:id,name']);
+        $lead->load($this->leadRelations());
 
         return response()->json(['success' => true, 'message' => 'Lead updated successfully.', 'lead' => $lead]);
     }
 
-    private function leadValidator(Request $request)
+    private function leadValidator(Request $request, bool $creating = false)
     {
         return Validator::make($request->all(), [
-            'customer_name' => 'required|string|max:255',
-            'product_name' => 'required|string|max:255',
+            // creating: either an existing contact, or the name + phone of a new one
+            'contact_id' => 'nullable|integer|exists:contacts,id',
+            'customer_name' => $creating ? 'required_without:contact_id|nullable|string|max:255' : 'required|string|max:255',
+            'phone' => $creating ? 'required_without:contact_id|nullable|string|max:20' : 'required|string|max:20',
+            'email' => 'nullable|email|max:255',
             'whatsapp' => 'nullable|string|max:20',
-            'phone' => 'required|string|max:20',
+            'company_id' => 'nullable|integer|exists:companies,id',
+            'product_name' => 'nullable|string|max:255',
             'source' => 'required|string|max:50',
             'social_platform' => 'nullable|string|max:50',
             'lead_type' => 'required|in:' . implode(',', Lead::LEAD_TYPES),
             'assigned_admins' => 'nullable|array',
             'assigned_admins.*' => 'exists:admins,id',
         ]);
+    }
+
+    private function leadRelations(): array
+    {
+        return [
+            'creator:id,name',
+            'assignedAdmins:id,name',
+            'contact:id,name,email,phone,whatsapp,company_id',
+            'company:id,name,website,phone,gst_number,address',
+        ];
+    }
+
+    /** The contact is the source of truth for name / phone / e-mail / WhatsApp: push edits to it and to its other leads. */
+    private function syncContactFromLead(Lead $lead, array $fields): void
+    {
+        $map = ['customer_name' => 'name', 'email' => 'email', 'phone' => 'phone', 'whatsapp' => 'whatsapp'];
+        $contactData = [];
+        foreach ($map as $leadCol => $contactCol) {
+            if (array_key_exists($leadCol, $fields)) {
+                $contactData[$contactCol] = $fields[$leadCol] === '' ? null : $fields[$leadCol];
+            }
+        }
+        if (!$contactData || !$lead->contact_id || !($contact = Contact::find($lead->contact_id))) {
+            return;
+        }
+
+        $contact->update($contactData);
+
+        $mirror = [];
+        foreach ($map as $leadCol => $contactCol) {
+            if (array_key_exists($contactCol, $contactData)) {
+                $mirror[$leadCol] = $leadCol === 'phone' ? ($contactData[$contactCol] ?? '') : $contactData[$contactCol];
+            }
+        }
+        Lead::where('contact_id', $contact->id)->where('id', '!=', $lead->id)->update($mirror);
+    }
+
+    /* ==================== INLINE FIELD EDIT (drawer) ====================
+       PATCH /leads/{id} with any subset of the editable fields. Used by click-to-edit in the
+       lead drawer, so it validates only what was sent. */
+
+    public function patch(Request $request, $id)
+    {
+        $admin = $this->currentAdmin();
+        $lead  = Lead::visibleTo($admin)->findOrFail($id);
+
+        $rules = [
+            'customer_name'     => 'sometimes|required|string|max:255',
+            'email'             => 'sometimes|nullable|email|max:255',
+            'phone'             => 'sometimes|required|string|max:20',
+            'whatsapp'          => 'sometimes|nullable|string|max:20',
+            'product_name'      => 'sometimes|nullable|string|max:255',
+            'source'            => 'sometimes|required|string|max:50',
+            'social_platform'   => 'sometimes|nullable|string|max:50',
+            'lead_type'         => 'sometimes|required|in:' . implode(',', Lead::LEAD_TYPES),
+            'company_id'        => 'sometimes|nullable|integer|exists:companies,id',
+            'assigned_admins'   => 'sometimes|nullable|array',
+            'assigned_admins.*' => 'exists:admins,id',
+        ];
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors(), 'message' => $validator->errors()->first()], 422);
+        }
+
+        $data = $validator->validated();
+
+        DB::transaction(function () use ($data, $lead, $admin) {
+            $own = array_intersect_key($data, array_flip(['customer_name', 'email', 'phone', 'whatsapp', 'product_name', 'source', 'social_platform', 'lead_type']));
+
+            if (array_key_exists('product_name', $own)) {
+                $own['product_name'] = $own['product_name'] ?? '';
+            }
+            if (array_key_exists('phone', $own)) {
+                $own['phone'] = $own['phone'] ?? '';
+            }
+            if (isset($own['source']) && $own['source'] !== 'Social Media') {
+                $own['social_platform'] = null;
+            }
+
+            if (array_key_exists('company_id', $data)) {
+                $company = $data['company_id'] ? Company::visibleTo($admin)->findOrFail($data['company_id']) : null;
+                $own['company_id']   = $company?->id;
+                $own['company_name'] = $company?->name;
+                $own['gst_number']   = $company?->gst_number;
+                if ($company && $lead->contact_id) {
+                    Contact::where('id', $lead->contact_id)->whereNull('company_id')->update(['company_id' => $company->id]);
+                }
+            }
+
+            $lead->update($own);
+            $this->syncContactFromLead($lead, array_intersect_key($data, array_flip(['customer_name', 'email', 'phone', 'whatsapp'])));
+
+            if (array_key_exists('assigned_admins', $data)) {
+                $lead->assignedAdmins()->sync($data['assigned_admins'] ?? []);
+            }
+        });
+
+        $lead->refresh()->load($this->leadRelations());
+
+        return response()->json(['success' => true, 'message' => 'Saved.', 'lead' => $lead]);
+    }
+
+    /* ==================== BULK STATUS ==================== */
+
+    public function bulkType(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids'       => 'required|array|min:1|max:500',
+            'ids.*'     => 'integer',
+            'lead_type' => 'required|in:' . implode(',', Lead::LEAD_TYPES),
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors(), 'message' => $validator->errors()->first()], 422);
+        }
+
+        $count = Lead::visibleTo($this->currentAdmin())->whereIn('id', $request->ids)->update(['lead_type' => $request->lead_type]);
+
+        return response()->json(['success' => true, 'message' => "{$count} lead(s) moved to " . ucfirst($request->lead_type) . '.', 'count' => $count]);
     }
 
     /* ==================== INLINE STATUS (lead type) UPDATE ====================
@@ -161,7 +323,7 @@ class LeadManageController extends Controller
 
         $lead->lead_type = $request->lead_type;
         $lead->save();
-        $lead->load(['creator:id,name', 'assignedAdmins:id,name']);
+        $lead->load($this->leadRelations());
 
         return response()->json(['success' => true, 'message' => 'Lead status updated.', 'lead' => $lead]);
     }
@@ -205,6 +367,8 @@ class LeadManageController extends Controller
             ->with([
                 'creator:id,name',
                 'assignedAdmins:id,name',
+                'contact:id,name,email,phone,whatsapp,company_id',
+                'company:id,name,website,phone,gst_number,address',
                 'reminders' => fn ($q) => $q->visibleTo($admin),
                 'attachments' => fn ($q) => $q->visibleTo($admin)->with('uploader:id,name'),
             ])
@@ -266,12 +430,26 @@ class LeadManageController extends Controller
         return response()->json(['success' => true, 'message' => 'Attachment deleted.']);
     }
 
-    /* ==================== REMINDERS ==================== */
+    /* ==================== REMINDERS ====================
+       A "reminder" entry can be one of two kinds, chosen on the front-end:
+         - type=reminder : has an optional date/time + appointment type,
+           shows up in the alarm/bell poll (checkReminders) and on the
+           standalone Reminders page (remindersData).
+         - type=note     : also has an optional date/time (just informational —
+           it never alerts), but no appointment type. Only shown in the lead
+           detail panel's "Notes" list.
+       appointment_type is forced null server-side for a note regardless of
+       what the client sends, since that concept only applies to reminders.
+       A note never triggers the alarm/bell because checkReminders() below
+       explicitly filters to type=reminder — not because it lacks a date.
+       (It does still show up in the Reminders page's data, under its own
+       "Notes" tab — see remindersData().) */
 
     public function storeReminder(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'lead_id' => 'required|exists:leads,id',
+            'type' => 'nullable|in:reminder,note',
             'note' => 'required|string|max:1000',
             'reminder_date' => 'nullable|date',
             'reminder_time' => 'nullable|date_format:H:i',
@@ -284,16 +462,23 @@ class LeadManageController extends Controller
 
         $lead = Lead::visibleTo($this->currentAdmin())->findOrFail($request->lead_id);
 
+        $type = $request->input('type', 'reminder') === 'note' ? 'note' : 'reminder';
+
         $reminder = LeadReminder::create([
             'lead_id' => $lead->id,
+            'type' => $type,
             'note' => $request->note,
             'reminder_date' => $request->reminder_date,
             'reminder_time' => $request->reminder_time,
-            'appointment_type' => $request->appointment_type,
+            'appointment_type' => $type === 'note' ? null : $request->appointment_type,
             'created_by' => $this->currentAdmin()->id,
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Reminder added.', 'reminder' => $reminder]);
+        return response()->json([
+            'success' => true,
+            'message' => $type === 'note' ? 'Note added.' : 'Reminder added.',
+            'reminder' => $reminder,
+        ]);
     }
 
     public function updateReminderStatus(Request $request, $id)
@@ -332,6 +517,10 @@ class LeadManageController extends Controller
      * this needs to stay cheap and reliable rather than assume the poll
      * interval alone drives punctuality.
      *
+     * Only type=reminder entries are considered — type=note entries never
+     * carry a date, so they'd already be excluded by whereNotNull below,
+     * but the explicit type filter keeps the intent obvious.
+     *
      * Returns:
      *   - due: reminders whose date/time has already arrived and are still
      *     'scheduled' — reported every call, not just the first, so the
@@ -352,6 +541,7 @@ class LeadManageController extends Controller
 
         $all = LeadReminder::whereHas('lead', fn ($q) => $q->visibleTo($admin))
             ->visibleTo($admin)
+            ->where('type', 'reminder')
             ->where('status', 'scheduled')
             ->whereNotNull('reminder_date')
             ->with('lead:id,customer_name')
@@ -376,10 +566,11 @@ class LeadManageController extends Controller
     }
 
     /* ==================== REMINDERS PAGE ====================
-       A dedicated page that lists every reminder across every lead the
-       admin can see (not just one lead's reminders, like the offcanvas
-       does). Filtering/search/status/lead is handled client-side in
-       reminders.blade.php, same pattern as the leads table. */
+       A dedicated page that lists every reminder AND note across every
+       lead the admin can see (not just one lead's, like the offcanvas
+       does). reminders.blade.php splits them into two tabs — "Reminders"
+       and "Notes" — over this same data set; filtering/search/status/lead
+       is handled client-side there, same pattern as the leads table. */
 
     public function remindersPage()
     {

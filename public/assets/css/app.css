@@ -1,0 +1,105 @@
+/* MovePro CRM — design tokens + app shell. Change colors/brand here only. */
+:root {
+  --mp-primary: #2563EB; --mp-primary-dark: #1D4ED8; --mp-primary-soft: #EAF0FE;
+  --mp-bg: #F5F7FB; --mp-sidebar: #111827; --mp-sidebar-text: #9CA3AF; --mp-sidebar-hover: #1F2937;
+  --mp-card: #FFFFFF; --mp-text: #111827; --mp-muted: #6B7280; --mp-border: #E5E7EB;
+  --mp-success: #16A34A; --mp-warning: #F59E0B; --mp-danger: #DC2626; --mp-info: #0EA5E9;
+  --mp-radius: 14px; --mp-sidebar-w: 260px; --mp-sidebar-w-sm: 76px; --mp-topbar-h: 64px;
+  --bs-primary: var(--mp-primary); --bs-body-font-family: 'Inter', system-ui, sans-serif;
+}
+body { font-family: var(--bs-body-font-family); background: var(--mp-bg); color: var(--mp-text); font-size: .9rem; }
+.page-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+.section-title { font-size: 1.05rem; font-weight: 600; margin: 0; }
+.card-title-sm { font-size: .95rem; font-weight: 600; margin: 0; }
+.caption { font-size: .78rem; color: var(--mp-muted); }
+.btn-primary { --bs-btn-bg: var(--mp-primary); --bs-btn-border-color: var(--mp-primary); --bs-btn-hover-bg: var(--mp-primary-dark); --bs-btn-hover-border-color: var(--mp-primary-dark); }
+
+/* Sidebar */
+.app-sidebar { position: fixed; inset: 0 auto 0 0; width: var(--mp-sidebar-w); background: var(--mp-sidebar); z-index: 1040; display: flex; flex-direction: column; transition: width .2s ease, transform .25s ease; }
+.brand { display: flex; align-items: center; gap: .75rem; padding: 1rem 1.25rem; height: var(--mp-topbar-h); color: #fff; text-decoration: none; }
+.brand-logo { width: 36px; height: 36px; flex: none; border-radius: 10px; background: var(--mp-primary); display: grid; place-items: center; font-size: 1.1rem; }
+.brand-name { font-weight: 700; line-height: 1.1; } .brand-sub { font-size: .66rem; color: var(--mp-sidebar-text); }
+.sidebar-scroll { flex: 1; overflow-y: auto; padding: .5rem .75rem 1rem; scrollbar-width: none; }
+.nav-group-btn { width: 100%; background: none; border: 0; color: var(--mp-sidebar-text); font-size: .74rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; padding: .9rem .75rem .35rem; }
+.nav-group-btn .bi-chevron-down { transition: transform .2s; font-size: .65rem; } .nav-group-btn[aria-expanded="false"] .bi-chevron-down { transform: rotate(-90deg); }
+.nav-link-item { display: flex; align-items: center; gap: .75rem; padding: .55rem .75rem; border-radius: 10px; color: var(--mp-sidebar-text); text-decoration: none; font-weight: 500; }
+.nav-link-item i { font-size: 1.05rem; width: 20px; text-align: center; }
+.nav-link-item:hover { background: var(--mp-sidebar-hover); color: #fff; }
+.nav-link-item.active { background: var(--mp-primary); color: #fff; }
+.nav-link-item:focus-visible, .nav-group-btn:focus-visible { outline: 2px solid #93C5FD; outline-offset: 1px; }
+
+/* Collapsed state (desktop) */
+body.sidebar-collapsed .app-sidebar { width: var(--mp-sidebar-w-sm); }
+body.sidebar-collapsed .brand-text, body.sidebar-collapsed .nav-link-item span, body.sidebar-collapsed .nav-group-btn span, body.sidebar-collapsed .nav-group-btn .bi-chevron-down { display: none; }
+body.sidebar-collapsed .nav-link-item { justify-content: center; } body.sidebar-collapsed .nav-group-btn { padding: .5rem 0; border-top: 1px solid var(--mp-sidebar-hover); margin-top: .5rem; }
+body.sidebar-collapsed .nav-group-btn::before { content: ""; }
+
+/* Main + topbar */
+.app-main { margin-left: var(--mp-sidebar-w); min-height: 100vh; transition: margin .2s ease; }
+body.sidebar-collapsed .app-main { margin-left: var(--mp-sidebar-w-sm); }
+.app-topbar { position: sticky; top: 0; z-index: 1030; height: var(--mp-topbar-h); background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--mp-border); display: flex; align-items: center; gap: 1rem; padding: 0 1.5rem; }
+.icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 0; background: transparent; color: var(--mp-text); display: inline-grid; place-items: center; position: relative; }
+.icon-btn:hover { background: var(--mp-bg); }
+.icon-btn .dot { position: absolute; top: 8px; right: 9px; width: 9px; height: 9px; background: var(--mp-danger); border: 2px solid #fff; border-radius: 50%; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--mp-primary-soft); color: var(--mp-primary); display: grid; place-items: center; font-weight: 700; font-size: .8rem; }
+.app-content { padding: 1.5rem; max-width: 1600px; }
+
+/* Global search */
+.global-search { position: relative; flex: 1; max-width: 520px; }
+.global-search input { padding-left: 2.4rem; border-radius: 10px; background: var(--mp-bg); border-color: transparent; }
+.global-search .bi-search { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: var(--mp-muted); }
+.search-results { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #fff; border: 1px solid var(--mp-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(17,24,39,.12); padding: .5rem; display: none; max-height: 380px; overflow-y: auto; }
+.search-results.show { display: block; }
+.search-item { display: flex; align-items: center; gap: .75rem; padding: .5rem .6rem; border-radius: 8px; color: inherit; text-decoration: none; }
+.search-item:hover { background: var(--mp-bg); }
+.search-type { font-size: .7rem; font-weight: 600; padding: .15rem .5rem; border-radius: 6px; background: var(--mp-primary-soft); color: var(--mp-primary); min-width: 62px; text-align: center; }
+.sidebar-scroll::-webkit-scrollbar {
+  display: none !important;
+}
+/* Company > My Profile */
+.pf-summary { position: sticky; top: calc(var(--mp-topbar-h) + 1rem); text-align: center; }
+.pf-avatar { width: 84px; height: 84px; border-radius: 50%; background: var(--mp-primary); color: #fff; display: grid; place-items: center; font-size: 1.8rem; font-weight: 700; margin: 0 auto .8rem; box-shadow: 0 0 0 6px var(--mp-primary-soft); }
+.pf-todo { list-style: none; padding: 0; margin: 0; text-align: left; display: grid; gap: .55rem; font-size: .86rem; }
+.pf-todo li { display: flex; align-items: center; gap: .6rem; color: var(--mp-muted); } .pf-todo li i { font-size: 1.05rem; color: #C3CCDD; } .pf-todo li.done { color: var(--mp-text); } .pf-todo li.done i { color: var(--mp-success); }
+.pf-todo a { color: inherit; text-decoration: none; } .pf-todo a:hover { color: var(--mp-primary); }
+
+/* E-mail verification panel */
+.verify-card { display: flex; gap: 1rem; align-items: flex-start; padding: 1.25rem; border-radius: 16px; border: 1.5px solid; }
+.verify-card.is-warn { background: #FFFBEB; border-color: #FCD9A0; } .verify-card.is-ok { background: #F0FDF4; border-color: #BBF7D0; } .verify-card.is-sent { background: var(--mp-primary-soft); border-color: #C7D6FB; }
+.vc-ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 1.4rem; flex: none; background: #fff; }
+.is-warn .vc-ico { color: #B45309; } .is-ok .vc-ico { color: var(--mp-success); } .is-sent .vc-ico { color: var(--mp-primary); }
+.vc-steps { list-style: none; counter-reset: s; display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; padding: 0; margin: .9rem 0 0; font-size: .8rem; color: #6B7280; }
+.vc-steps li { counter-increment: s; display: flex; align-items: center; gap: .4rem; } .vc-steps li::before { content: counter(s); width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 1px solid #FCD9A0; font-size: .68rem; font-weight: 700; display: grid; place-items: center; color: #B45309; }
+
+/* Password */
+.pw-bar { height: 5px; border-radius: 4px; background: #E8ECF3; overflow: hidden; margin-top: .55rem; } .pw-bar > span { display: block; height: 100%; width: 0; border-radius: 4px; transition: width .25s, background-color .25s; }
+.pw-reqs { list-style: none; padding: 0; margin: .7rem 0 0; display: flex; flex-wrap: wrap; gap: .3rem 1rem; font-size: .78rem; color: var(--mp-muted); }
+.pw-reqs li::before { content: "\25CB"; margin-right: .35rem; } .pw-reqs li.ok { color: var(--mp-success); font-weight: 600; } .pw-reqs li.ok::before { content: "\2713"; }
+.pf-save[disabled] { opacity: .5; }
+@media (max-width: 991.98px) { .pf-summary { position: static; } }
+@media (prefers-reduced-motion: reduce) { .pw-bar > span { transition: none; } }/* MovePro CRM — Branches & Users pages (company layout).
+   Details-modal tabs, danger zone, staff rows and live-filter states. (console.css is not loaded in the company layout.) */
+.cm-tabs { border-bottom-color: var(--mp-border); }
+.cm-tabs .nav-link { font-weight: 500; color: var(--mp-muted); border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: .6rem .9rem; background: none; }
+.cm-tabs .nav-link:hover { color: var(--mp-text); }
+.cm-tabs .nav-link.active { color: var(--mp-primary); font-weight: 600; border-bottom-color: var(--mp-primary); }
+.cm-tabs .nav-link:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: -2px; }
+
+.danger-zone { border: 1px solid #F5C2C2; background: #FFF8F8; border-radius: 12px; padding: 1rem; }
+.tone-muted { background: var(--mp-bg); color: var(--mp-muted); }
+
+.row-link { cursor: pointer; }
+.row-link:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: -2px; }
+
+/* Filters / pagination swap in place */
+.live-box { transition: opacity .15s; }
+.live-box.is-loading { opacity: .5; pointer-events: none; }
+
+/* People */
+.person { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+.person .avatar { flex: none; }
+.person-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .7rem 0; border-bottom: 1px solid var(--mp-border); }
+.person-row:last-child { border-bottom: 0; }
+
+@media (prefers-reduced-motion: reduce) { .live-box { transition: none; } }
+

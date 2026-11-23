@@ -9,6 +9,7 @@
   .badge-status.rs-missed    { background: var(--danger-bg);  color: var(--danger); }
   .badge-status.rs-silent    { background: #EEF1F6;           color: var(--text-muted); }
   .badge-status.rs-completed { background: var(--success-bg); color: var(--success); }
+  .badge-status.rs-note      { background: var(--gold-bg);    color: var(--gold); }
 
   /* ---- Subtle left-accent instead of a full row tint, so the reminders
      table stays readable even with a lot of rows ---- */
@@ -16,6 +17,7 @@
   .crm-table tbody tr[data-rem-status="scheduled"] { border-left: 3px solid var(--info); }
   .crm-table tbody tr[data-rem-status="completed"] { border-left: 3px solid var(--success); }
   .crm-table tbody tr[data-rem-status="silent"]    { border-left: 3px solid var(--border); opacity: .7; }
+  .crm-table tbody tr[data-rem-status="note"]      { border-left: 3px solid var(--gold); }
 
   /* ---- Searchable single-select "lead" control (reused for the filter
      bar and for the add-reminder modal) ---- */
@@ -104,6 +106,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Reminder vs Note tabs — same list/table below, just partitioned by kind -->
+    <ul class="nav lead-tabs mb-3" id="reminderKindTabs">
+      <li class="nav-item"><a class="nav-link active" data-kind="reminder" href="#">Reminders <span class="badge-count" id="remindersCountTab"></span></a></li>
+      <li class="nav-item"><a class="nav-link" data-kind="note" href="#">Notes <span class="badge-count" id="notesCountTab"></span></a></li>
+    </ul>
 
     <!-- Filter bar -->
     <div class="filter-bar">
@@ -241,6 +249,7 @@
 
     let reminders = [];
     let activeFilters = { search: "", status: "", leadId: null };
+    let activeKind = "reminder"; // "reminder" | "note" — which tab is selected
     let currentPage = 1;
     const PAGE_SIZE = 10;
     let selectedFilterLeadId = null;
@@ -307,12 +316,13 @@
       return dt.getTime() < Date.now();
     }
     function effectiveStatus(r) {
+      if ((r.type || "reminder") === "note") return "note"; // notes don't have a scheduled/missed/silent lifecycle
       if (r.status === "completed") return "completed";
       if (r.status === "silent") return "silent";
       return isMissed(r) ? "missed" : "scheduled";
     }
     function statusBadge(status) {
-      const labels = { scheduled: "Scheduled", missed: "Missed", silent: "Silenced", completed: "Completed" };
+      const labels = { scheduled: "Scheduled", missed: "Missed", silent: "Silenced", completed: "Completed", note: "Note" };
       return `<span class="badge-status rs-${status}">${labels[status]}</span>`;
     }
 
@@ -325,13 +335,14 @@
 
     function getFiltered() {
       return reminders.filter(r => {
+        const matchesKind = (r.type || "reminder") === activeKind;
         const term = activeFilters.search.toLowerCase();
         const haystack = `${r.note} ${r.lead ? r.lead.customer_name : ""} ${r.lead ? r.lead.product_name : ""}`.toLowerCase();
         const matchesSearch = !term || haystack.includes(term);
         const status = effectiveStatus(r);
         const matchesStatus = !activeFilters.status || status === activeFilters.status;
         const matchesLead = !activeFilters.leadId || (r.lead && r.lead.id === activeFilters.leadId);
-        return matchesSearch && matchesStatus && matchesLead;
+        return matchesKind && matchesSearch && matchesStatus && matchesLead;
       });
     }
 
@@ -341,9 +352,12 @@
     }
 
     function renderStats() {
-      document.getElementById("statTotal").textContent = reminders.length;
+      const reminderItems = reminders.filter(r => (r.type || "reminder") === "reminder");
+      const noteItems = reminders.filter(r => (r.type || "reminder") === "note");
+
+      document.getElementById("statTotal").textContent = reminderItems.length;
       let scheduled = 0, missed = 0, silent = 0;
-      reminders.forEach(r => {
+      reminderItems.forEach(r => {
         const s = effectiveStatus(r);
         if (s === "scheduled") scheduled++;
         else if (s === "missed") missed++;
@@ -352,6 +366,9 @@
       document.getElementById("statScheduled").textContent = scheduled;
       document.getElementById("statMissed").textContent = missed;
       document.getElementById("statSilent").textContent = silent;
+
+      document.getElementById("remindersCountTab").textContent = reminderItems.length;
+      document.getElementById("notesCountTab").textContent = noteItems.length;
     }
 
     function renderTable() {
@@ -363,15 +380,16 @@
 
       const tbody = document.getElementById("remindersTbody");
       if (pageItems.length === 0) {
+        const label = activeKind === "note" ? "notes" : "reminders";
         tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
-          <i class="bi bi-bell-slash"></i><h6>No reminders found</h6>
-          <p class="fs-13 mb-0">Try adjusting filters or add a new reminder.</p></div></td></tr>`;
+          <i class="bi bi-bell-slash"></i><h6>No ${label} found</h6>
+          <p class="fs-13 mb-0">Try adjusting filters${activeKind === "reminder" ? " or add a new reminder" : ""}.</p></div></td></tr>`;
       } else {
         tbody.innerHTML = pageItems.map(r => {
           const status = effectiveStatus(r);
           const lead = r.lead;
           const canSilence = status === "scheduled" || status === "missed";
-          const canComplete = status !== "completed";
+          const canComplete = status !== "completed" && status !== "note";
           return `
           <tr data-rem-status="${status}">
             <td>
@@ -499,6 +517,32 @@
       });
     }
 
+    /* ---------------- Reminders / Notes tabs ----------------
+       Same table underneath, just partitioned by kind. The Status filter
+       (Scheduled/Missed/Silenced/Completed) only means something for
+       reminders, so it's hidden — and reset — while the Notes tab is active. */
+
+    function initKindTabs() {
+      document.querySelectorAll("#reminderKindTabs .nav-link").forEach(tab => {
+        tab.addEventListener("click", e => {
+          e.preventDefault();
+          document.querySelectorAll("#reminderKindTabs .nav-link").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          activeKind = tab.dataset.kind;
+
+          const statusSelect = document.getElementById("filterStatus");
+          statusSelect.style.display = activeKind === "note" ? "none" : "";
+          if (activeKind === "note") {
+            activeFilters.status = "";
+            statusSelect.value = "";
+          }
+
+          currentPage = 1;
+          renderTable();
+        });
+      });
+    }
+
     /* ---------------- Searchable lead select (shared helper) ---------------- */
 
     function initLeadSearchSelect(opts) {
@@ -591,6 +635,10 @@
         const aptEl = document.querySelector('input[name="addRemAptType"]:checked');
         const payload = {
           lead_id: selectedAddLeadId,
+          // This page is specifically for date/time follow-ups, so items
+          // created here are always the "reminder" kind. Plain notes (no
+          // date/time) are added from within a lead's own detail panel.
+          type: "reminder",
           note: document.getElementById("addRemNote").value.trim(),
           reminder_date: document.getElementById("addRemDate").value || null,
           reminder_time: document.getElementById("addRemTime").value || null,
@@ -612,6 +660,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       initFilters();
+      initKindTabs();
       initLeadSelects();
       initAddReminderForm();
       loadReminders();

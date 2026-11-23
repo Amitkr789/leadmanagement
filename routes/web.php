@@ -1,4 +1,6 @@
 <?php
+use App\Http\Controllers\Console\AuthController as Console;
+use App\Http\Controllers\Console\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\AuthController;
@@ -14,18 +16,48 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChatbotSettingController;
 use App\Http\Controllers\WhatsAppWebhookController;
+use App\Http\Controllers\LeadDirectoryController;
+use App\Http\Controllers\CompanyOpenController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DealController;
+use App\Http\Controllers\WorkspaceController;
+
+use App\Http\Controllers\GoogleAuthController;
+use App\Http\Controllers\SignInMethodsController;
+use App\Http\Controllers\Console\{
+    DirectoryController,
+    CashfreeSettingsController,
+    InvoiceController,
+    PlanController,
+    SubscriptionController,
+    TrialController,
+    PaymentSettingsController
+};
 /* ==========================================================================
    Guest routes (no auth required)
    ========================================================================== */
  // Guest-only (already logged-in admin yahan nahi aa sakta)
+// replace your guest group
 Route::middleware('guest:admin')->group(function () {
     Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/admin/login', [AuthController::class, 'login']);
+    Route::post('/admin/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+
+    Route::prefix('admin/auth/google')->middleware('throttle:20,1')->group(function () {
+        Route::get('redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
+        Route::get('callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
+    });
 });
+
+Route::view('/workspace-inactive', 'pages.auth.workspace-inactive')->name('workspace.inactive');
+
 
 // Login (Laravel Breeze / Auth::routes() handles these — add yours if custom)
     Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 
+Route::get('/onboarding', [WorkspaceController::class, 'show'])->middleware('super_admin')->name('workspace.onboarding');
+Route::post('/onboarding', [WorkspaceController::class, 'update'])->middleware('super_admin')->name('workspace.onboarding.save');
+// inside your first auth:admin group
+Route::post('/profile/google/unlink', [SignInMethodsController::class, 'unlinkGoogle'])->name('admin.profile.google.unlink');
     // Route::get('/admin-manage', [PagesController::class, 'users'])->name('admin.register');
     Route::get('/', [DashboardController::class, 'index'])->name('auth.home.main');
     Route::post('logout', [AuthController::class, 'logout'])->name('admin.logout');
@@ -37,12 +69,63 @@ Route::middleware('guest:admin')->group(function () {
     Route::post('users/bulk-delete', [AuthController::class, 'bulkDelete']);
     Route::patch('users/{id}/toggle-status', [AuthController::class, 'toggleStatus']);
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
-    Route::put('/profile', [ProfileController::class, 'update']);
-    Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
+  Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+
+    // Password change with email OTP
+    Route::post('/profile/password/send-otp', [ProfileController::class, 'sendPasswordOtp'])
+        ->middleware('throttle:6,1')
+        ->name('admin.profile.password.send-otp');
+
+    Route::post('/profile/password/verify-otp', [ProfileController::class, 'verifyPasswordOtp'])
+        ->middleware('throttle:12,1')
+        ->name('admin.profile.password.verify-otp');
 });
 
 Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
+
+Route::prefix('deals')->name('deals.')->group(function () {
+    Route::get('/',                 [DealController::class, 'page'])->name('index');
+    Route::get('/data',             [DealController::class, 'data'])->name('data');
+    Route::post('/',                [DealController::class, 'store'])->name('store');
+    Route::post('/bulk-delete',     [DealController::class, 'bulkDestroy'])->name('bulkDestroy');
+    Route::patch('/{id}',           [DealController::class, 'patch'])->name('patch');
+    Route::patch('/{id}/stage',     [DealController::class, 'updateStage'])->name('stage');
+    Route::delete('/{id}',          [DealController::class, 'destroy'])->name('destroy');
+});
+
+
+// Contacts directory
+Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+Route::get('/contacts/data', [ContactController::class, 'data'])->name('contacts.data');
+Route::post('/contacts/bulk-delete', [ContactController::class, 'bulkDestroy'])->name('contacts.bulkDestroy');
+Route::get('/contacts/{id}', [ContactController::class, 'show'])->whereNumber('id')->name('contacts.show');
+Route::patch('/contacts/{id}', [ContactController::class, 'update'])->whereNumber('id')->name('contacts.update');
+Route::delete('/contacts/{id}', [ContactController::class, 'destroy'])->whereNumber('id')->name('contacts.destroy');
+
+// Companies directory
+Route::get('/companies', [CompanyOpenController::class, 'index'])->name('companies.index');
+Route::get('/companies/data', [CompanyOpenController::class, 'data'])->name('companies.data');
+Route::post('/companies/bulk-delete', [CompanyOpenController::class, 'bulkDestroy'])->name('companies.bulkDestroy');
+Route::get('/companies/{id}', [CompanyOpenController::class, 'show'])->whereNumber('id')->name('companies.show');
+Route::delete('/companies/{id}', [CompanyOpenController::class, 'destroy'])->whereNumber('id')->name('companies.destroy');
+
+// contacts + companies (the lead is created from these)
+Route::get('/leads/contacts/search', [LeadDirectoryController::class, 'contactsSearch'])->name('leads.contacts.search');
+Route::post('/leads/contacts', [LeadDirectoryController::class, 'contactStore'])->name('leads.contacts.store');
+Route::get('/leads/companies/search', [LeadDirectoryController::class, 'companiesSearch'])->name('leads.companies.search');
+Route::post('/leads/companies', [LeadDirectoryController::class, 'companyStore'])->name('leads.companies.store');
+Route::patch('/leads/companies/{id}', [LeadDirectoryController::class, 'companyUpdate'])->name('leads.companies.update');
+
+// bulk status change from the table's selection bar
+Route::post('/leads/bulk-type', [LeadManageController::class, 'bulkType'])->name('leads.bulkType');
+
+// click-to-edit in the drawer (partial update of one or more fields)
+Route::patch('/leads/{id}', [LeadManageController::class, 'patch'])->name('leads.patch');
+
+
+
+
 
     Route::get('/leads', [LeadManageController::class, 'Leadmanage'])->name('leads.index');
     Route::get('/leads/data', [LeadManageController::class, 'data'])->name('leads.data');
@@ -107,15 +190,18 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 Route::post('knowledge-base/regenerate-catalog', [App\Http\Controllers\KnowledgeBaseController::class, 'regenerateCatalogOverview'])
     ->name('kb.regenerateCatalog');
 
-
 Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
 Route::get('tasks/data', [TaskController::class, 'data'])->name('tasks.data');
 Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
-Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
-Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
-Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
-Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
+
+// NEW — bulk actions & checklist (literal paths, so they never clash with {task})
+Route::post('tasks/bulk-status', [TaskController::class, 'bulkStatus'])->name('tasks.bulkStatus');
+Route::post('tasks/bulk-assign', [TaskController::class, 'bulkAssign'])->name('tasks.bulkAssign');
 Route::post('tasks/bulk-destroy', [TaskController::class, 'bulkDestroy'])->name('tasks.bulkDestroy');
+
+Route::post('tasks/checklist', [TaskController::class, 'storeChecklistItem'])->name('tasks.checklist.store');
+Route::patch('tasks/checklist/{item}', [TaskController::class, 'toggleChecklistItem'])->name('tasks.checklist.toggle');
+Route::delete('tasks/checklist/{item}', [TaskController::class, 'destroyChecklistItem'])->name('tasks.checklist.destroy');
 
 Route::post('tasks/comments', [TaskController::class, 'storeComment'])->name('tasks.comments.store');
 Route::post('tasks/attachments', [TaskController::class, 'storeAttachment'])->name('tasks.attachments.store');
@@ -123,6 +209,13 @@ Route::delete('tasks/attachments/{attachment}', [TaskController::class, 'destroy
 
 Route::get('tasks-notifications/check', [TaskController::class, 'notificationsCheck'])->name('tasks.notifications.check');
 Route::post('tasks-notifications/read', [TaskController::class, 'notificationsMarkRead'])->name('tasks.notifications.read');
+
+// {task} routes last
+Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
+Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
+Route::post('tasks/{task}/duplicate', [TaskController::class, 'duplicate'])->name('tasks.duplicate');   // NEW
+Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
 });
 
@@ -273,4 +366,44 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 Route::delete('/leads/attachments/{id}', [LeadManageController::class, 'destroyAttachment'])->name('leads.attachments.destroy');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/dashboard/data', [DashboardController::class, 'data'])->name('dashboard.data');
+});
+
+
+// Software owner console
+Route::prefix(config('console.path'))->name('console.')->middleware('console.gate')->group(function () {
+    Route::get('login', [Console::class, 'showLogin'])->name('login');
+    Route::post('login', [Console::class, 'login'])->middleware('throttle:10,1')->name('login.store');
+    Route::get('two-factor', [Console::class, 'showTwoFactor'])->name('2fa');
+    Route::post('two-factor', [Console::class, 'verifyTwoFactor'])->middleware('throttle:10,1')->name('2fa.verify');
+
+    Route::middleware('console.auth')->group(function () {
+        Route::get('/', fn () => view('superadminconsole.pages.console.dashboard'))->name('dashboard');
+        Route::get('companies', [CompanyController::class, 'index'])->name('companies.index');
+        Route::get('trials', [TrialController::class, 'index'])->name('trials.index');
+        Route::get('directory', [DirectoryController::class, 'index'])->name('directory.index');
+          Route::post('companies/{company}/send-reset-link', [CompanyController::class, 'sendResetLink'])->name('companies.reset-link');
+        Route::post('companies/{company}/reset-password', [CompanyController::class, 'resetPassword'])->name('companies.password');
+        Route::get('companies/create', [CompanyController::class, 'create'])->name('companies.create');
+        Route::post('companies', [CompanyController::class, 'store'])->name('companies.store');
+        Route::get('companies/{company}', [CompanyController::class, 'show'])->name('companies.show');
+        Route::put('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
+        Route::post('companies/{company}/upgrade', [CompanyController::class, 'upgrade'])->name('companies.upgrade');
+        Route::delete('companies/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
+        Route::post('companies/{company}/extend-trial', [CompanyController::class, 'extendTrial'])->name('companies.extend');
+        Route::post('companies/{company}/status', [CompanyController::class, 'setStatus'])->name('companies.status');
+        Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+        Route::post('invoices/{invoice}/paid', [InvoiceController::class, 'markPaid'])->name('invoices.paid');
+        Route::get('plans', [PlanController::class, 'index'])->name('plans.index');
+        Route::post('plans', [PlanController::class, 'store'])->name('plans.store');
+        Route::put('plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+        Route::get('subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+         Route::get('settings/payments', [PaymentSettingsController::class, 'edit'])->name('payments.edit');
+        Route::post('settings/payments', [PaymentSettingsController::class, 'update'])->name('payments.update');
+        Route::post('settings/payments/test', [PaymentSettingsController::class, 'test'])->name('payments.test');
+        Route::post('logout', [Console::class, 'logout'])->name('logout');
+        Route::get('settings/cashfree', [\App\Http\Controllers\Console\CashfreeSettingsController::class, 'edit'])->name('cashfree.edit');
+Route::post('settings/cashfree', [\App\Http\Controllers\Console\CashfreeSettingsController::class, 'update'])->name('cashfree.update');
+Route::post('settings/cashfree/test', [\App\Http\Controllers\Console\CashfreeSettingsController::class, 'test'])->name('cashfree.test');
+    });
 });

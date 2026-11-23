@@ -1,0 +1,67 @@
+/* MovePro forms: modern inputs for the company dashboard, sign-in and sign-up pages.
+   Works with plain Bootstrap markup (.form-label, .form-control, .form-select, .input-group, .form-check) so every form picks it up. */
+:root { --mp-input-h: 46px; --mp-input-border: #DDE3EE; --mp-ring: 0 0 0 4px rgba(37,99,235,.14); }
+
+.form-label { font-size: .8rem; font-weight: 600; color: #374151; margin-bottom: .4rem; }
+.form-label .text-danger { margin-left: 2px; }
+
+/* Text inputs + selects */
+.form-control, .form-select { height: var(--mp-input-h); border: 1.5px solid var(--mp-input-border); border-radius: 12px; padding: 0 .95rem; font-size: .92rem; color: var(--mp-text); background-color: #fff; transition: border-color .15s, box-shadow .15s, background-color .15s; }
+.form-control::placeholder { color: #A0A9BA; }
+.form-control:hover, .form-select:hover { border-color: #C3CCDD; }
+.form-control:focus, .form-select:focus { border-color: var(--mp-primary); box-shadow: var(--mp-ring); background-color: #fff; outline: 0; }
+.form-control-lg, .form-select-lg { height: 54px; font-size: 1rem; border-radius: 14px; }
+.form-control-sm, .form-select-sm { height: 36px; font-size: .84rem; border-radius: 10px; }
+textarea.form-control { height: auto; min-height: 100px; padding: .75rem .95rem; line-height: 1.55; resize: vertical; }
+.form-select { padding-right: 2.5rem; background-position: right .95rem center; background-size: 12px; }
+.form-control:disabled, .form-select:disabled, .form-control[readonly] { background-color: #F3F5F9; color: #8792A6; cursor: not-allowed; }
+input[type=date].form-control, input[type=time].form-control { padding-right: .6rem; } input::-webkit-calendar-picker-indicator { opacity: .55; cursor: pointer; }
+input[type=number].form-control::-webkit-inner-spin-button { opacity: .4; }
+input[type=file].form-control { padding: .6rem .8rem; height: auto; } input[type=file]::file-selector-button { border: 0; background: var(--mp-primary-soft); color: var(--mp-primary); font-weight: 600; border-radius: 8px; padding: .4rem .8rem; margin-right: .8rem; }
+
+/* Input groups read as one control */
+.input-group { flex-wrap: nowrap; }
+.input-group > .form-control, .input-group > .form-select { height: var(--mp-input-h); min-width: 0; }
+.input-group-text { background: #F5F7FB; border: 1.5px solid var(--mp-input-border); color: var(--mp-muted); font-size: .88rem; font-weight: 500; padding: 0 .95rem; border-radius: 12px; transition: border-color .15s, color .15s, background-color .15s; }
+.input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) { margin-left: -1.5px; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.input-group > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu):not(.form-floating) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.input-group:focus-within > .input-group-text { border-color: var(--mp-primary); color: var(--mp-primary); background: var(--mp-primary-soft); }
+.input-group > .form-control:focus { position: relative; z-index: 3; }
+.input-group > .btn { height: var(--mp-input-h); border: 1.5px solid var(--mp-input-border); background: #fff; color: #4B5563; padding: 0 .95rem; } .input-group > .btn:hover { background: var(--mp-primary-soft); color: var(--mp-primary); border-color: var(--mp-primary); z-index: 3; }
+
+/* Floating labels */
+.form-floating > .form-control, .form-floating > .form-select { height: 58px; padding: 1.55rem .95rem .45rem; } .form-floating > label { padding: 1rem .95rem; font-size: .9rem; color: #8792A6; }
+.form-floating > .form-control:focus ~ label, .form-floating > .form-control:not(:placeholder-shown) ~ label { color: var(--mp-primary); transform: scale(.82) translateY(-.6rem) translateX(.1rem); }
+
+/* Validation */
+.form-control.is-invalid, .form-select.is-invalid { border-color: var(--mp-danger); } .form-control.is-invalid:focus, .form-select.is-invalid:focus { box-shadow: 0 0 0 4px rgba(220,38,38,.14); }
+.form-control.is-valid, .form-select.is-valid { border-color: var(--mp-success); }
+.invalid-feedback { font-size: .78rem; font-weight: 500; color: var(--mp-danger); margin-top: .35rem; }
+.form-text { font-size: .76rem; color: var(--mp-muted); margin-top: .35rem; }
+
+/* Checkboxes, radios, switches */
+.form-check-input { width: 1.2em; height: 1.2em; margin-top: .15em; border: 1.5px solid #BCC6D6; background-color: #fff; transition: background-color .15s, border-color .15s, box-shadow .15s; }
+.form-check-input[type=checkbox] { border-radius: 6px; } .form-check-input:hover { border-color: var(--mp-primary); }
+.form-check-input:checked { background-color: var(--mp-primary); border-color: var(--mp-primary); } .form-check-input:focus { border-color: var(--mp-primary); box-shadow: var(--mp-ring); }
+.form-check-label { font-size: .9rem; color: #374151; cursor: pointer; }
+.form-switch .form-check-input { width: 2.5em; height: 1.35em; border-radius: 2em; border-color: #C3CCDD; background-color: #E5E9F2; } .form-switch .form-check-input:checked { background-color: var(--mp-primary); }
+
+/* Layout helpers for longer forms */
+.form-section { background: #fff; border: 1px solid var(--mp-border); border-radius: 18px; padding: 1.5rem; margin-bottom: 1rem; }
+.form-section-title { display: flex; align-items: center; gap: .6rem; font-size: 1rem; font-weight: 700; margin-bottom: 1.2rem; } .form-section-title i { width: 32px; height: 32px; display: grid; place-items: center; background: var(--mp-primary-soft); color: var(--mp-primary); border-radius: 10px; }
+.form-actions { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: flex-end; padding-top: 1rem; }
+.file-drop { border: 2px dashed #C3CCDD; border-radius: 16px; padding: 1.6rem; text-align: center; color: var(--mp-muted); background: #FAFBFD; transition: border-color .15s, background .15s; } .file-drop:hover, .file-drop.is-over { border-color: var(--mp-primary); background: var(--mp-primary-soft); color: var(--mp-primary); }
+
+/* Buttons used in forms */
+.btn { border-radius: 12px; font-weight: 600; } .btn-sm { border-radius: 10px; }
+.btn:not(.btn-lg):not(.btn-sm):not(.btn-close) { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; }
+.btn-primary { box-shadow: 0 1px 2px rgba(37,99,235,.3), 0 6px 14px -6px rgba(37,99,235,.5); } .btn-primary:disabled { box-shadow: none; }
+.btn-light.border, .btn-outline-secondary { border-color: var(--mp-input-border) !important; }
+
+@media (max-width: 767.98px) {
+  .form-control, .form-select { font-size: 16px; } /* stops iOS zooming into the field */
+  .form-section { padding: 1.1rem; border-radius: 16px; }
+  .form-actions { position: sticky; bottom: 72px; background: rgba(255,255,255,.95); backdrop-filter: blur(8px); margin: 0 -1.1rem -1.1rem; padding: .8rem 1.1rem; border-top: 1px solid var(--mp-border); border-radius: 0 0 16px 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .form-control, .form-select, .form-check-input, .input-group-text { transition: none; } }
+.bill-sum { background: var(--mp-bg); border-radius: 14px; padding: 1rem 1.2rem; display: grid; gap: .35rem; }

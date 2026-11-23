@@ -1,0 +1,52 @@
+/* MovePro CRM: bell, notifications dropdown, reminder alarm popup, snooze panel. Loaded on every company page. */
+
+/* Bell */
+.bell-count { position: absolute; top: 3px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--mp-danger); color: #fff; font-size: .66rem; font-weight: 700; line-height: 18px; text-align: center; border: 2px solid #fff; box-sizing: content-box; }
+.icon-btn.bell-shake .bi-bell { animation: bellShake .9s ease; transform-origin: 50% 0; }
+@keyframes bellShake { 0%,100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(9deg); } 60% { transform: rotate(-6deg); } 75% { transform: rotate(3deg); } }
+.bell-menu { width: 380px; max-width: 94vw; border-radius: 16px; overflow: hidden; }
+.bell-head, .bell-foot { display: flex; justify-content: space-between; align-items: center; gap: .5rem; padding: .8rem 1rem; }
+.bell-head { border-bottom: 1px solid var(--mp-border); } .bell-foot { border-top: 1px solid var(--mp-border); background: #FAFBFD; }
+.bell-link { border: 0; background: none; padding: 0; color: var(--mp-primary); font-size: .8rem; font-weight: 600; } .bell-link:hover { text-decoration: underline; }
+.bell-list { max-height: 420px; overflow-y: auto; }
+.bell-empty { padding: 2rem 1rem; text-align: center; color: var(--mp-muted); font-size: .86rem; }
+.bell-item { display: flex; gap: .75rem; padding: .75rem 1rem; text-decoration: none; color: inherit; border-bottom: 1px solid var(--mp-border); } .bell-item:last-child { border-bottom: 0; }
+.bell-item:hover { background: #FAFBFD; color: inherit; } .bell-item.is-unread { background: var(--mp-primary-soft); } .bell-item.is-unread:hover { background: #E1EAFD; }
+.bell-ico { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex: none; font-size: 1rem; background: var(--mp-bg); color: var(--mp-muted); }
+.bell-ico.t-info { background: #E3F4FC; color: #0284C7; } .bell-ico.t-primary { background: var(--mp-primary-soft); color: var(--mp-primary); } .bell-ico.t-danger { background: #FDECEC; color: var(--mp-danger); }
+.bell-main { min-width: 0; flex: 1; } .bell-t { font-size: .86rem; font-weight: 600; } .bell-b { font-size: .8rem; color: #4B5563; word-break: break-word; } .bell-time { font-size: .72rem; color: var(--mp-muted); margin-top: .15rem; }
+.bell-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mp-primary); flex: none; margin-top: .4rem; }
+
+/* Reminder popup: sits above modals (1055) and toasts (2000) */
+#remWrap { position: fixed; inset: 0; z-index: 3000; display: none; align-items: flex-start; justify-content: center; padding: 8vh 1rem 1rem; background: rgba(17,24,39,.5); overflow-y: auto; }
+#remWrap.is-on { display: flex; animation: remFade .2s ease; }
+.rem-stack { width: 100%; max-width: 480px; display: grid; gap: .9rem; }
+.rem-card { background: #fff; border-radius: 20px; padding: 1.15rem 1.15rem 1rem; box-shadow: 0 24px 60px rgba(17,24,39,.35); border-top: 5px solid var(--mp-danger); animation: remIn .28s cubic-bezier(.2,.9,.3,1.2); }
+.rem-top { display: flex; align-items: flex-start; gap: .9rem; }
+.rem-ring { width: 52px; height: 52px; border-radius: 50%; background: #FDECEC; color: var(--mp-danger); display: grid; place-items: center; font-size: 1.5rem; flex: none; position: relative; }
+.rem-ring::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--mp-danger); opacity: 0; animation: remPulse 1.4s ease-out infinite; }
+.rem-ring i { animation: bellShake 1.4s ease infinite; transform-origin: 50% 0; }
+.rem-main { flex: 1; min-width: 0; cursor: pointer; border-radius: 12px; } .rem-main:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: 3px; }
+.rem-kicker { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mp-danger); }
+.rem-title { font-size: 1.1rem; font-weight: 700; line-height: 1.25; word-break: break-word; } .rem-lead { font-weight: 600; margin-top: .1rem; }
+.rem-sub { font-size: .82rem; color: var(--mp-muted); } .rem-note { margin-top: .4rem; background: var(--mp-bg); border-radius: 10px; padding: .45rem .65rem; font-size: .84rem; word-break: break-word; }
+.rem-open { display: inline-flex; align-items: center; gap: .3rem; margin-top: .5rem; font-size: .82rem; font-weight: 600; color: var(--mp-primary); }
+.rem-mute { border: 0; background: var(--mp-bg); color: var(--mp-muted); width: 34px; height: 34px; border-radius: 10px; flex: none; } .rem-mute:hover { color: var(--mp-text); }
+.rem-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--mp-border); }
+.rem-hint { margin-top: .7rem; font-size: .78rem; color: #92400E; background: #FFFBEB; border: 1px solid #FCD9A0; border-radius: 10px; padding: .4rem .65rem; }
+@keyframes remIn { from { opacity: 0; transform: translateY(-18px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes remFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes remPulse { 0% { transform: scale(.85); opacity: .7; } 100% { transform: scale(1.35); opacity: 0; } }
+
+/* Remind me later (used in the popup and in the lead's reminder list) */
+.sn-panel { margin-top: .75rem; background: var(--mp-bg); border-radius: 14px; padding: .8rem; }
+.sn-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .7rem; }
+.sn-chip { border: 1.5px solid var(--mp-border); background: #fff; color: #374151; font-size: .82rem; font-weight: 600; border-radius: 999px; padding: .32rem .8rem; transition: border-color .15s, background .15s, color .15s; }
+.sn-chip:hover { border-color: var(--mp-primary); color: var(--mp-primary); background: var(--mp-primary-soft); } .sn-chip:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: 2px; }
+.sn-custom label { display: block; margin-bottom: .25rem; }
+
+@media (max-width: 575.98px) { #remWrap { padding-top: 3vh; } .rem-card { padding: 1rem; border-radius: 18px; } .rem-actions .btn { flex: 1 1 auto; } }
+@media (prefers-reduced-motion: reduce) { .rem-card, #remWrap.is-on, .rem-ring::after, .rem-ring i, .icon-btn.bell-shake .bi-bell { animation: none; } .rem-ring::after { opacity: .5; } }
+
+.bell-sec { padding: .55rem 1rem .3rem; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mp-muted); background: #FAFBFD; border-bottom: 1px solid var(--mp-border); }
+.bell-foot { flex-wrap: wrap; }

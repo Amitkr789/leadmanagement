@@ -11,6 +11,7 @@ class LeadReminder extends Model
 {
     protected $fillable = [
         'lead_id',
+        'type',
         'note',
         'reminder_date',
         'reminder_time',
@@ -46,6 +47,18 @@ class LeadReminder extends Model
         }
 
         return $query->where('created_by', $admin->id);
+    }
+
+    /** Actual date/time follow-ups — these are the ones that alert and appear on the Reminders page. */
+    public function scopeReminders(Builder $query): Builder
+    {
+        return $query->where('type', 'reminder');
+    }
+
+    /** Plain notes against a lead — no date/time, never alert. */
+    public function scopeNotes(Builder $query): Builder
+    {
+        return $query->where('type', 'note');
     }
 
     public function getIsMissedAttribute(): bool

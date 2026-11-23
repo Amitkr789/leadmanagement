@@ -1,0 +1,36 @@
+/* Owner console: wizard, choice cards, summary */
+.stepper { display: flex; gap: .5rem; margin-bottom: 1.25rem; }
+.stepper-item { flex: 1; display: flex; align-items: center; gap: .6rem; padding: .7rem .9rem; background: #fff; border: 1px solid var(--mp-border); border-radius: 12px; color: var(--mp-muted); font-weight: 500; }
+.stepper-item .num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--mp-bg); font-size: .78rem; font-weight: 700; flex: none; }
+.stepper-item.active { border-color: var(--mp-primary); color: var(--mp-text); } .stepper-item.active .num { background: var(--mp-primary); color: #fff; }
+.stepper-item.done { cursor: pointer; } .stepper-item.done .num { background: var(--mp-success); color: #fff; }
+.choice-card { position: relative; cursor: pointer; margin: 0; } .choice-card input { position: absolute; opacity: 0; }
+.choice-card .box { display: block; height: 100%; border: 1.5px solid var(--mp-border); border-radius: 12px; padding: 1rem; background: #fff; transition: border-color .15s, background .15s; }
+.choice-card input:checked + .box { border-color: var(--mp-primary); background: var(--mp-primary-soft); }
+.choice-card input:focus-visible + .box { outline: 2px solid var(--mp-primary); outline-offset: 2px; }
+.choice-card .price { display: block; font-size: 1.4rem; font-weight: 700; margin: .4rem 0; } .price small { font-size: .75rem; color: var(--mp-muted); font-weight: 500; }
+.plan-feats { list-style: none; padding: 0; margin: 0; font-size: .82rem; color: var(--mp-muted); } .plan-feats li::before { content: "\2713  "; color: var(--mp-success); }
+.chip { border: 1px solid var(--mp-border); background: #fff; border-radius: 999px; padding: .35rem .9rem; font-weight: 500; }
+.chip.active { background: var(--mp-primary); border-color: var(--mp-primary); color: #fff; }
+.summary { position: sticky; top: calc(var(--mp-topbar-h) + 1rem); }
+.summary dt { font-size: .74rem; color: var(--mp-muted); font-weight: 500; } .summary dd { font-weight: 600; margin-bottom: .8rem; word-break: break-word; }
+.is-invalid ~ .invalid-feedback { display: block; }
+.cred { background: var(--mp-bg); border-radius: 10px; padding: .6rem .8rem; display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .5rem; word-break: break-all; }
+@media (max-width: 767.98px) { .stepper-item .lbl { display: none; } .stepper-item.active .lbl { display: inline; } .summary { position: static; } }
+/* Plans */
+.feat { position: relative; margin: 0; } .feat input { position: absolute; opacity: 0; }
+.feat span { display: inline-flex; align-items: center; gap: .4rem; border: 1px solid var(--mp-border); border-radius: 999px; padding: .35rem .8rem; cursor: pointer; background: #fff; font-size: .85rem; }
+.feat input:checked + span { background: var(--mp-primary-soft); border-color: var(--mp-primary); color: var(--mp-primary); font-weight: 600; }
+.feat input:focus-visible + span { outline: 2px solid var(--mp-primary); outline-offset: 2px; }
+.add-plan { background: none; border: 0; padding: 0; width: 100%; }
+.add-plan .box { border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .25rem; color: var(--mp-primary); min-height: 180px; }
+.add-plan:hover .box { background: var(--mp-primary-soft); }
+/* Company modal */
+.js-company-row { cursor: pointer; } .js-company-row:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: -2px; }
+.danger-zone { border: 1px solid #F5C2C2; background: #FFF8F8; border-radius: 12px; padding: 1rem; }
+.cm-tabs .nav-link { font-weight: 500; color: var(--mp-muted); } .cm-tabs .nav-link.active { color: var(--mp-primary); font-weight: 600; }
+/* Activity timeline */
+.tl-item { position: relative; display: flex; gap: .8rem; padding-bottom: 1.1rem; }
+.tl-item::before { content: ""; position: absolute; left: 5px; top: 16px; bottom: 0; width: 2px; background: var(--mp-border); } .tl-item:last-child::before { display: none; }
+.tl-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--mp-primary); margin-top: 5px; flex: none; position: relative; z-index: 1; }
+.tl-suspended { background: var(--mp-danger); } .tl-reactivated, .tl-upgraded, .tl-payment { background: var(--mp-success); } .tl-trial_extended { background: var(--mp-info); } .tl-updated { background: var(--mp-muted); }

@@ -1,0 +1,25 @@
+/* MovePro auth pages — uses tokens from app.css */
+.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1.05fr 1fr; }
+.auth-hero { background: var(--mp-sidebar); color: #fff; padding: 2.5rem 3rem; display: flex; flex-direction: column; justify-content: space-between; }
+.auth-hero .brand { padding: 0; }
+.hero-title { font-size: 2rem; font-weight: 700; line-height: 1.2; letter-spacing: -.02em; max-width: 18ch; }
+.hero-list { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; gap: .9rem; color: #CBD5E1; }
+.hero-list i { color: #60A5FA; margin-right: .6rem; }
+.auth-panel { background: var(--mp-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+.auth-card { width: 100%; max-width: 420px; background: #fff; border: 1px solid var(--mp-border); border-radius: var(--mp-radius); padding: 2rem; }
+.auth-card .form-control:focus { box-shadow: 0 0 0 .2rem rgba(37,99,235,.15); border-color: var(--mp-primary); }
+.auth-card .input-group-text { background: #fff; color: var(--mp-muted); }
+.input-group .is-invalid ~ .invalid-feedback { display: block; }
+.otp { display: flex; gap: .5rem; justify-content: space-between; }
+.otp-box { width: 100%; max-width: 54px; aspect-ratio: 1; padding: 0; text-align: center; font-size: 1.4rem; font-weight: 600; }
+.shake { animation: shake .35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+@media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
+/* Phone: dark header + white bottom sheet, like a native app */
+@media (max-width: 767.98px) {
+  .auth-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; background: var(--mp-sidebar); }
+  .auth-hero { padding: 1.25rem 1.25rem 2.25rem; } .hero-extra { display: none; }
+  .auth-panel { background: #fff; border-radius: 24px 24px 0 0; margin-top: -1.25rem; padding: 0; justify-content: flex-start; }
+  .auth-card { border: 0; padding: 1.75rem 1.25rem; max-width: none; }
+  .btn-lg { padding-top: .8rem; padding-bottom: .8rem; }
+}

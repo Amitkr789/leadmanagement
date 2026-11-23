@@ -1,0 +1,33 @@
+/* Company > Lead Integrations. Follows the team pages (filter bar, row-link table, modal with tabs). */
+.row-link { cursor: pointer; } .row-link:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: -2px; }
+.live-box { transition: opacity .15s; } .live-box.is-loading { opacity: .5; pointer-events: none; }
+
+/* Provider tiles */
+.int-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 1.15rem; flex: none; }
+.int-meta { background: #E7F0FF; color: #1877F2; } .int-justdial { background: #FFF1DB; color: #D97706; } .int-indiamart { background: #E3F6EE; color: #0F9D74; }
+
+/* Filter pills for the three sources */
+.prov-pills { display: flex; flex-wrap: wrap; gap: .4rem; }
+.prov-pill { display: inline-flex; align-items: center; gap: .4rem; border: 1.5px solid var(--mp-border); background: #fff; color: #374151; font-size: .84rem; font-weight: 600; border-radius: 999px; padding: .35rem .8rem; transition: border-color .15s, background .15s, color .15s; }
+.prov-pill span { background: var(--mp-bg); color: var(--mp-muted); font-size: .72rem; border-radius: 999px; padding: 0 .45rem; min-width: 1.4rem; text-align: center; }
+.prov-pill:hover { border-color: #C3CCDD; } .prov-pill.is-on { background: var(--mp-primary-soft); border-color: var(--mp-primary); color: var(--mp-primary); } .prov-pill.is-on span { background: #fff; color: var(--mp-primary); }
+.prov-pill:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: 2px; }
+
+/* Choice cards inside the Connect modal */
+.int-label { font-size: .8rem; font-weight: 700; letter-spacing: .02em; color: #374151; margin-bottom: .5rem; }
+.int-choice { position: relative; display: block; cursor: pointer; margin: 0; } .int-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.int-choice .box { display: block; height: 100%; padding: .8rem; background: #fff; border: 1.5px solid var(--mp-border); border-radius: 14px; transition: border-color .15s, background .15s, box-shadow .15s; }
+.int-choice:hover .box { border-color: #C3CCDD; } .int-choice input:checked + .box { border-color: var(--mp-primary); background: var(--mp-primary-soft); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.int-choice input:focus-visible + .box { outline: 2px solid var(--mp-primary); outline-offset: 2px; }
+
+/* Setup steps + WhatsApp advanced box */
+.int-steps { padding-left: 1.2rem; margin: 0; display: grid; gap: .45rem; font-size: .88rem; color: #374151; } .int-steps li { word-break: break-word; padding-left: .2rem; }
+.int-adv { border: 1px solid var(--mp-border); border-radius: 12px; padding: .7rem .9rem; background: #FAFBFD; } .int-adv summary { cursor: pointer; font-size: .86rem; font-weight: 600; color: #374151; }
+
+/* Detail modal bits (scoped so they never clash with other pages) */
+#intModal .cm-tabs .nav-link { font-weight: 500; color: var(--mp-muted); } #intModal .cm-tabs .nav-link.active { color: var(--mp-primary); font-weight: 600; }
+#intModal .danger-zone { border: 1px solid #F5C2C2; background: #FFF8F8; border-radius: 12px; padding: 1rem; }
+#intModal .person-row { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .7rem 0; border-bottom: 1px solid var(--mp-border); } #intModal .person-row:last-child { border-bottom: 0; }
+#intModal .person { display: flex; align-items: center; gap: .7rem; min-width: 0; }
+@media (max-width: 767.98px) { .prov-pills { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: .2rem; } .prov-pill { white-space: nowrap; } }
+@media (prefers-reduced-motion: reduce) { .live-box, .prov-pill, .int-choice .box { transition: none; } }

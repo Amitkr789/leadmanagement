@@ -1,0 +1,46 @@
+/* MovePro CRM — reusable components */
+.mp-card { background: var(--mp-card); border: 1px solid var(--mp-border); border-radius: var(--mp-radius); }
+.mp-card-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--mp-border); }
+.mp-card-body { padding: 1.25rem; }
+
+/* KPI card */
+.kpi { padding: 1.1rem 1.25rem; display: flex; gap: .9rem; align-items: flex-start; height: 100%; }
+.kpi-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 1.2rem; flex: none; }
+.kpi-value { font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
+.kpi-label { color: var(--mp-muted); font-size: .8rem; }
+.kpi-trend { font-size: .76rem; font-weight: 600; margin-top: .35rem; }
+.trend-up { color: var(--mp-success); } .trend-down { color: var(--mp-danger); }
+.tone-primary { background: var(--mp-primary-soft); color: var(--mp-primary); }
+.tone-success { background: #E8F6EC; color: var(--mp-success); } .tone-warning { background: #FEF3DC; color: #B45309; }
+.tone-danger { background: #FDECEC; color: var(--mp-danger); } .tone-info { background: #E3F4FC; color: #0284C7; }
+
+/* Status badge */
+.status { display: inline-flex; align-items: center; gap: .35rem; padding: .22rem .6rem; border-radius: 999px; font-size: .74rem; font-weight: 600; white-space: nowrap; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Data table */
+.mp-table { margin: 0; font-size: .85rem; }
+.mp-table th { font-size: .76rem; font-weight: 600; color: var(--mp-muted); background: #FAFBFD; white-space: nowrap; border-bottom-color: var(--mp-border); padding: .7rem 1rem; }
+.mp-table td { padding: .8rem 1rem; vertical-align: middle; border-bottom-color: var(--mp-border); }
+.mp-table tbody tr:hover { background: #FAFBFD; }
+.route { white-space: nowrap; font-weight: 500; } .route i { color: var(--mp-muted); margin: 0 .25rem; }
+
+/* Alert rows */
+.alert-row { display: flex; gap: .75rem; align-items: center; padding: .8rem 1.25rem; border-bottom: 1px solid var(--mp-border); }
+.alert-row:last-child { border-bottom: 0; }
+.alert-bar { width: 4px; align-self: stretch; border-radius: 4px; flex: none; }
+.alert-text { flex: 1; min-width: 0; font-weight: 500; }
+
+/* Empty state + skeleton */
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--mp-muted); }
+.empty-state i { font-size: 2.4rem; color: #CBD5E1; display: block; margin-bottom: .5rem; }
+.skeleton { background: linear-gradient(90deg, #EEF1F6 25%, #F7F9FC 50%, #EEF1F6 75%); background-size: 200% 100%; animation: sk 1.2s infinite; border-radius: 8px; min-height: 1em; }
+@keyframes sk { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+/* Toast */
+.toast-wrap { position: fixed; top: 76px; right: 16px; z-index: 2000; }
+
+/* Mobile bottom navigation (app feel) */
+.bottom-nav { display: none; }
+.drawer-backdrop { display: none; }

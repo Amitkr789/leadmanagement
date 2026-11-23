@@ -1,19 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Sign in · LeadFlow CRM</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="csrf-token" content="{{ csrf_token() }}">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
-</head>
-<body>
+@extends('layouts.auth')
 
+@section('title', 'Sign in')
+
+@section('body')
 <div class="login-shell">
 
   <aside class="login-aside">
@@ -30,7 +19,7 @@
         <li><span class="check"><i class="bi bi-check-lg"></i></span> Smart filters &amp; lead scoring</li>
         <li><span class="check"><i class="bi bi-check-lg"></i></span> Automatic follow-up reminders</li>
         <li><span class="check"><i class="bi bi-check-lg"></i></span> Full activity timeline per lead</li>
-        <li><span class="check"><i class="bi bi-check-lg"></i></span> Team-wide pipeline visibility</li>
+        <li><span class="check"><i class="bi bi-check-lg"></i></span> Your company's data, fully private</li>
       </ul>
     </div>
 
@@ -42,17 +31,36 @@
       <h1>Welcome back</h1>
       <p class="sub">Sign in to your workspace to keep your pipeline moving.</p>
 
+      @if (config('services.google.enabled'))
+        <a href="{{ route('google.redirect') }}" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2" id="googleBtn">
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.9 7.35 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          <span>Continue with Google</span>
+        </a>
+        @if (config('tenancy.google_signup'))
+          <p class="text-center fs-12 text-muted-2 mt-2 mb-0">New here? Continue with Google to start your free trial.</p>
+        @endif
+
+        <div class="d-flex align-items-center my-3">
+          <hr class="flex-grow-1 m-0"><span class="px-3 fs-13 text-muted-2">or sign in with email</span><hr class="flex-grow-1 m-0">
+        </div>
+      @endif
+
       <form id="loginForm" data-action="{{ url('/admin/login') }}" novalidate>
         <div class="mb-3">
           <label class="form-label" for="email">Work email</label>
-          <input type="email" class="form-control" id="email" placeholder="you@company.com" required>
+          <input type="email" class="form-control" id="email" placeholder="you@company.com" autocomplete="username" required>
           <div class="invalid-feedback d-block text-danger fs-12" id="err_email"></div>
         </div>
 
         <div class="mb-2">
           <label class="form-label" for="password">Password</label>
           <div class="pwd-wrap">
-            <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+            <input type="password" class="form-control" id="password" placeholder="Enter your password" autocomplete="current-password" required>
             <button type="button" class="toggle-pwd" id="togglePwd" aria-label="Show password"><i class="bi bi-eye"></i></button>
           </div>
           <div class="invalid-feedback d-block text-danger fs-12" id="err_password"></div>
@@ -70,33 +78,31 @@
         </button>
       </form>
 
-      <p class="text-center fs-13 text-muted-2 mt-4 mb-0">Access sirf authorized admins ke liye hai.</p>
+      <p class="text-center fs-13 text-muted-2 mt-4 mb-0">Access is restricted to authorized users only.</p>
     </div>
   </main>
 </div>
+@endsection
 
-<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastStack" style="z-index:1080"></div>
-
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+@push('scripts')
 <script>
-  $(function () {
-  $.ajaxSetup({
-    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
-  });
-
-  // Show/hide password
+$(function () {
+  // Show / hide password
   $('#togglePwd').on('click', function () {
     const $pwd = $('#password');
-    const $icon = $(this).find('i');
-    if ($pwd.attr('type') === 'password') {
-      $pwd.attr('type', 'text');
-      $icon.attr('class', 'bi bi-eye-slash');
-    } else {
-      $pwd.attr('type', 'password');
-      $icon.attr('class', 'bi bi-eye');
-    }
+    const show = $pwd.attr('type') === 'password';
+    $pwd.attr('type', show ? 'text' : 'password');
+    $(this).attr('aria-label', show ? 'Hide password' : 'Show password')
+           .find('i').attr('class', show ? 'bi bi-eye-slash' : 'bi bi-eye');
   });
+
+  // Prevent double clicks on the Google button
+  $('#googleBtn').on('click', function () {
+    $(this).addClass('disabled').attr('aria-disabled', 'true')
+           .find('span').text('Redirecting to Google…');
+  });
+
+  function clearErrors() { $('.invalid-feedback').text(''); }
 
   // Submit login
   $('#loginForm').on('submit', function (e) {
@@ -118,14 +124,19 @@
       },
       success: function (res) {
         showToast('success', res.message || 'Login successful.');
-        setTimeout(() => { window.location.href = res.redirect; }, 500);
+        setTimeout(function () { window.location.href = res.redirect; }, 500);
       },
       error: function (xhr) {
-        if (xhr.status === 422) {
+        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
           const errors = xhr.responseJSON.errors;
-          Object.keys(errors).forEach(field => $(`#err_${field}`).text(errors[field][0]));
+          Object.keys(errors).forEach(function (f) { $('#err_' + f).text(errors[f][0]); });
+        } else if (xhr.status === 429) {
+          showToast('error', 'Too many attempts. Please wait a minute and try again.');
+        } else if (xhr.status === 419) {
+          showToast('error', 'Your session expired. Reloading the page…');
+          setTimeout(function () { window.location.reload(); }, 1200);
         } else {
-          showToast('error', xhr.responseJSON?.message || 'Login failed. Please try again.');
+          showToast('error', (xhr.responseJSON && xhr.responseJSON.message) || 'Sign-in failed. Please try again.');
         }
       },
       complete: function () {
@@ -134,25 +145,6 @@
       }
     });
   });
-
-  function clearErrors() {
-    $('.invalid-feedback').text('');
-  }
-
-  function showToast(type, msg) {
-    const bg = type === 'success' ? 'text-bg-success' : 'text-bg-danger';
-    const $toast = $(`
-      <div class="toast align-items-center ${bg} border-0" role="alert">
-        <div class="d-flex">
-          <div class="toast-body">${msg}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-      </div>
-    `);
-    $('#toastStack').append($toast);
-    new bootstrap.Toast($toast[0], { delay: 3000 }).show();
-  }
 });
 </script>
-</body>
-</html>
+@endpush

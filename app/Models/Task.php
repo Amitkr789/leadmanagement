@@ -24,7 +24,8 @@ class Task extends Model
     protected function casts(): array
     {
         return [
-            'due_date'     => 'date',
+            // "Y-m-d" keeps the JSON value a plain date (no timezone shift in the browser)
+            'due_date'     => 'date:Y-m-d',
             'completed_at' => 'datetime',
         ];
     }
@@ -54,6 +55,11 @@ class Task extends Model
     public function activityLogs()
     {
         return $this->hasMany(TaskActivityLog::class)->latest();
+    }
+
+    public function checklistItems()
+    {
+        return $this->hasMany(TaskChecklistItem::class)->orderBy('sort_order')->orderBy('id');
     }
 
     /* ---------------- Scopes ---------------- */
@@ -90,6 +96,6 @@ class Task extends Model
 
     public function canBeUpdatedBy(Admin $admin): bool
     {
-        return $admin->isSuperAdmin() || $this->assigned_to === $admin->id;
+        return $admin->isSuperAdmin() || (int) $this->assigned_to === (int) $admin->id;
     }
 }

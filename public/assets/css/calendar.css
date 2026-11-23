@@ -1,0 +1,168 @@
+/* MovePro CRM > Calendar. Everything is scoped to #calApp. Uses the --mp-* tokens from the app shell. */
+#calApp { --hh: 48px; --gut: 56px; --cal-h: calc(100vh - var(--mp-topbar-h) - 3rem); }
+#calApp .min-w-0 { min-width: 0; }
+#calApp .cal-shell { display: grid; grid-template-columns: 268px minmax(0, 1fr); height: var(--cal-h); min-height: 560px; background: #fff; border: 1px solid var(--mp-border); border-radius: var(--mp-radius); overflow: hidden; }
+#calApp .btn-ico { border: 0; background: transparent; color: var(--mp-muted); width: 32px; height: 32px; border-radius: 8px; display: inline-grid; place-items: center; font-size: .95rem; flex: none; padding: 0; }
+#calApp .btn-ico:hover { background: var(--mp-bg); color: var(--mp-text); }
+#calApp .int-label { font-size: .8rem; font-weight: 700; letter-spacing: .02em; color: #374151; margin-bottom: .4rem; }
+
+/* ---- left panel ---- */
+#calApp .cal-side { --bs-offcanvas-width: 320px; border-right: 1px solid var(--mp-border); overflow-y: auto; background: #fff; }
+#calApp .cal-side-in { padding: 1rem; display: flex; flex-direction: column; gap: 1.1rem; width: 100%; min-width: 0; }
+#calApp .cal-create { display: flex; align-items: center; justify-content: center; gap: .55rem; border: 0; background: var(--mp-primary); color: #fff; font-weight: 600; border-radius: 14px; padding: .7rem 1rem; box-shadow: 0 4px 14px rgba(37,99,235,.28); transition: background .15s, transform .1s; }
+#calApp .cal-create:hover { background: var(--mp-primary-dark); } #calApp .cal-create:active { transform: scale(.98); }
+#calApp .mini-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .35rem; } #calApp .mini-t { font-weight: 600; font-size: .86rem; }
+#calApp .mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px 0; text-align: center; }
+#calApp .mini-dow { font-size: .66rem; font-weight: 700; color: var(--mp-muted); padding: .2rem 0; }
+#calApp .md { border: 0; background: none; aspect-ratio: 1; border-radius: 50%; font-size: .76rem; color: var(--mp-text); display: grid; place-items: center; padding: 0; width: 100%; max-width: 32px; margin: 0 auto; }
+#calApp .md:hover { background: var(--mp-bg); } #calApp .md.is-other { color: #A0A9BA; }
+#calApp .md.in-range { background: var(--mp-primary-soft); border-radius: 0; max-width: none; } #calApp .md.in-range:hover { background: #DCE6FD; }
+#calApp .md.is-today { background: var(--mp-primary); color: #fff; font-weight: 700; border-radius: 50%; max-width: 32px; }
+#calApp .md.is-sel:not(.is-today) { box-shadow: inset 0 0 0 2px var(--mp-primary); border-radius: 50%; max-width: 32px; }
+#calApp .md:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: 1px; }
+#calApp .cl-head { display: flex; align-items: center; justify-content: space-between; font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mp-muted); margin-bottom: .3rem; }
+#calApp .cl-gh { display: flex; align-items: center; gap: .4rem; width: 100%; border: 0; background: none; padding: .35rem .1rem; font-size: .84rem; font-weight: 600; color: #374151; text-align: left; }
+#calApp .cl-gh i { font-size: .65rem; transition: transform .2s; } #calApp .cl-gh[aria-expanded="false"] i { transform: rotate(-90deg); }
+#calApp .cl-items[hidden] { display: none; }
+#calApp .cl-row { display: flex; align-items: center; gap: .2rem; border-radius: 10px; padding-left: .3rem; } #calApp .cl-row:hover { background: var(--mp-bg); }
+#calApp .cl-row label { display: flex; align-items: center; gap: .65rem; flex: 1; min-width: 0; margin: 0; padding: .38rem 0; cursor: pointer; font-size: .86rem; }
+#calApp .cl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #calApp .cl-lock { font-size: .7rem; color: var(--mp-muted); }
+#calApp .cl-chk { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--c); margin: 0; flex: none; display: grid; place-items: center; cursor: pointer; background: #fff; transition: background .12s; }
+#calApp .cl-chk:checked { background: var(--c); } #calApp .cl-chk:checked::after { content: ""; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translate(-1px, -1px); }
+#calApp .cl-chk:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: 2px; }
+#calApp .cl-edit { opacity: 0; } #calApp .cl-row:hover .cl-edit, #calApp .cl-edit:focus-visible { opacity: 1; } @media (hover: none) { #calApp .cl-edit { opacity: 1; } }
+
+/* ---- toolbar ---- */
+#calApp .cal-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+#calApp .cal-bar { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; padding: .7rem 1rem; border-bottom: 1px solid var(--mp-border); }
+#calApp .cal-nav { display: flex; }
+#calApp .cal-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em; margin: 0 .25rem; white-space: nowrap; }
+#calApp .cal-tools { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+#calApp .cal-seg { display: inline-flex; background: var(--mp-bg); border-radius: 12px; padding: 3px; }
+#calApp .cal-seg > button, #calApp .cal-seg label span { border: 0; background: none; padding: .38rem .8rem; border-radius: 9px; font-size: .83rem; font-weight: 600; color: var(--mp-muted); white-space: nowrap; display: inline-flex; align-items: center; gap: .4rem; cursor: pointer; transition: background .15s, color .15s; }
+#calApp .cal-seg > button.is-on, #calApp .cal-seg input:checked + span { background: #fff; color: var(--mp-primary); box-shadow: 0 1px 3px rgba(17,24,39,.12); }
+#calApp .cal-seg label { margin: 0; } #calApp .cal-seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+#calApp .cal-seg input:focus-visible + span, #calApp .cal-seg > button:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: 1px; }
+#calApp .cal-seg-sm { flex-wrap: wrap; } #calApp .cal-seg-sm label span { padding: .32rem .7rem; font-size: .8rem; }
+#calApp #calNotifBtn.is-on { color: var(--mp-primary); }
+#calApp .cal-notif { width: 300px; max-width: 92vw; border-radius: 16px; padding: 1rem !important; }
+#calApp .cn-state { display: flex; align-items: center; gap: .5rem; font-weight: 600; margin-bottom: .35rem; } #calApp .cn-dot { width: 9px; height: 9px; border-radius: 50%; background: #A0A9BA; } #calApp .cn-dot.is-on { background: var(--mp-success); } #calApp .cn-dot.is-warn { background: var(--mp-warning); }
+#calApp .cal-nudge { display: flex; align-items: center; gap: .6rem; padding: .5rem 1rem; background: var(--mp-primary-soft); border-bottom: 1px solid #C7D6FB; font-size: .84rem; } #calApp .cal-nudge span { flex: 1; min-width: 0; }
+#calApp .cal-stage { flex: 1; min-height: 0; position: relative; overflow: hidden; transition: opacity .15s; } #calApp .cal-stage.is-loading { opacity: .55; }
+
+/* ---- month ---- */
+#calApp .mv { display: flex; flex-direction: column; height: 100%; }
+#calApp .mv-head { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--mp-border); }
+#calApp .mv-head div { padding: .45rem; text-align: center; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mp-muted); }
+#calApp .mv-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), minmax(0, 1fr)); }
+#calApp .mc { border-right: 1px solid var(--mp-border); border-bottom: 1px solid var(--mp-border); padding: 3px 4px 2px; min-width: 0; min-height: 0; overflow: hidden; cursor: pointer; transition: background .12s; }
+#calApp .mc:nth-child(7n) { border-right: 0; } #calApp .mc:hover { background: #FAFBFD; } #calApp .mc.is-other .mc-d { color: #A0A9BA; } #calApp .mc.is-drop { background: var(--mp-primary-soft); }
+#calApp .mc-n { display: flex; justify-content: center; height: 26px; }
+#calApp .mc-d { min-width: 24px; height: 24px; padding: 0 .3rem; border-radius: 12px; display: grid; place-items: center; font-size: .78rem; font-weight: 600; cursor: pointer; } #calApp .mc-d:hover { background: var(--mp-bg); }
+#calApp .mc.is-today .mc-d { background: var(--mp-primary); color: #fff; }
+#calApp .mc.is-sel:not(.is-today) .mc-d { box-shadow: inset 0 0 0 2px var(--mp-primary); }
+#calApp .mc-dots { display: none; justify-content: center; gap: 3px; margin-top: 2px; } #calApp .mc-dots i { width: 6px; height: 6px; border-radius: 50%; display: block; }
+#calApp .ev { display: flex; align-items: center; gap: .35rem; height: 20px; margin-bottom: 2px; padding: 0 .4rem; border-radius: 6px; font-size: .74rem; line-height: 20px; cursor: pointer; overflow: hidden; white-space: nowrap; min-width: 0; }
+#calApp .ev-title { overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+#calApp .ev-t:hover { background: var(--mp-bg); } #calApp .ev-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; } #calApp .ev-time { color: var(--mp-muted); flex: none; font-size: .7rem; }
+#calApp .ev-a { background: var(--c); color: var(--tc, #fff); } #calApp .ev-a:hover { filter: brightness(1.08); }
+#calApp .ev-a.cont-l { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -4px; } #calApp .ev-a.cont-r { border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: -4px; }
+#calApp .mc-more { border: 0; background: none; padding: 0 .4rem; height: 18px; font-size: .72rem; font-weight: 700; color: var(--mp-muted); border-radius: 6px; } #calApp .mc-more:hover { background: var(--mp-bg); color: var(--mp-text); }
+#calApp .ev-ghost { position: fixed; z-index: 3200; pointer-events: none; padding: 0 .6rem; height: 22px; line-height: 22px; border-radius: 6px; font-size: .75rem; font-weight: 600; color: var(--tc, #fff); background: var(--c); box-shadow: 0 6px 18px rgba(17,24,39,.3); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- week / day: time grid ---- */
+#calApp .tg-scroll { height: 100%; overflow-y: auto; overflow-x: hidden; position: relative; }
+#calApp .tg-row, #calApp .tg-body { display: grid; grid-template-columns: var(--gut) repeat(var(--n), minmax(0, 1fr)); }
+#calApp .tg-top { position: sticky; top: 0; z-index: 6; background: #fff; border-bottom: 1px solid var(--mp-border); }
+#calApp .tg-hd { text-align: center; padding: .4rem 0 .3rem; border-left: 1px solid var(--mp-border); }
+#calApp .tg-dow { display: block; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--mp-muted); }
+#calApp .tg-num { display: inline-grid; place-items: center; min-width: 34px; height: 34px; border-radius: 17px; font-size: 1.15rem; font-weight: 600; cursor: pointer; } #calApp .tg-num:hover { background: var(--mp-bg); }
+#calApp .tg-hd.is-today .tg-dow { color: var(--mp-primary); } #calApp .tg-hd.is-today .tg-num { background: var(--mp-primary); color: #fff; }
+#calApp .tg-allday { border-top: 1px solid var(--mp-border); max-height: 96px; overflow-y: auto; }
+#calApp .tg-allday .tg-gut { font-size: .62rem; color: var(--mp-muted); display: flex; align-items: flex-start; justify-content: flex-end; padding: .3rem .4rem 0 0; }
+#calApp .tg-ad { border-left: 1px solid var(--mp-border); padding: 2px 2px 0; min-height: 26px; min-width: 0; }
+#calApp .tg-gut { position: relative; }
+#calApp .tg-body { position: relative; height: calc(24 * var(--hh)); }
+#calApp .tg-hr { position: absolute; right: 8px; transform: translateY(-50%); font-size: .66rem; color: var(--mp-muted); white-space: nowrap; }
+#calApp .tg-col { position: relative; border-left: 1px solid var(--mp-border); background-image: linear-gradient(var(--mp-border) 1px, transparent 1px); background-size: 100% var(--hh); cursor: default; user-select: none; }
+#calApp .tg-col.is-today { background-color: rgba(234,240,254,.35); }
+#calApp .te { position: absolute; border-radius: 8px; background: var(--c); color: var(--tc, #fff); padding: 2px 6px 0; font-size: .74rem; line-height: 1.25; overflow: hidden; cursor: pointer; border: 1px solid rgba(255,255,255,.75); box-shadow: 0 1px 3px rgba(17,24,39,.18); min-height: 20px; transition: filter .12s, box-shadow .12s; }
+#calApp .te:hover { filter: brightness(1.07); box-shadow: 0 3px 10px rgba(17,24,39,.22); z-index: 3; }
+#calApp .te-t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #calApp .te.is-short .te-t { display: block; } #calApp .te-s { font-size: .68rem; opacity: .92; white-space: nowrap; } #calApp .te.is-short .te-s { display: inline; } #calApp .te-l { font-size: .68rem; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#calApp .te-rz { position: absolute; left: 0; right: 0; bottom: 0; height: 7px; cursor: ns-resize; }
+#calApp .te.is-src { opacity: .35; } #calApp .te-ghost { z-index: 7; pointer-events: none; opacity: .92; box-shadow: 0 8px 22px rgba(17,24,39,.3); }
+#calApp .tg-new { position: absolute; left: 2px; right: 4px; z-index: 4; border-radius: 8px; background: var(--mp-primary); color: #fff; font-size: .74rem; font-weight: 600; padding: 2px 6px; opacity: .85; pointer-events: none; }
+#calApp .tg-now { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--mp-danger); z-index: 5; pointer-events: none; } #calApp .tg-now i { position: absolute; left: -6px; top: -7px; width: 12px; height: 12px; border-radius: 50%; background: var(--mp-danger); }
+body.cal-dragging { cursor: grabbing !important; user-select: none; }
+
+/* ---- agenda ---- */
+#calApp .ag { height: 100%; overflow-y: auto; padding: .5rem 1.25rem 1.25rem; }
+#calApp .ag-day { display: flex; gap: 1.1rem; padding: .85rem 0; border-bottom: 1px solid var(--mp-border); } #calApp .ag-day:last-child { border-bottom: 0; }
+#calApp .ag-date { width: 64px; flex: none; text-align: center; } #calApp .ag-num { display: grid; place-items: center; width: 38px; height: 38px; margin: 0 auto; border-radius: 50%; font-size: 1.2rem; font-weight: 600; }
+#calApp .ag-day.is-today .ag-num { background: var(--mp-primary); color: #fff; } #calApp .ag-dow, #calApp .ag-mon { font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--mp-muted); display: block; }
+#calApp .ag-list { flex: 1; min-width: 0; display: grid; gap: .35rem; align-content: start; }
+#calApp .ag-ev { display: flex; align-items: center; gap: .8rem; padding: .5rem .7rem; border-radius: 10px; cursor: pointer; min-width: 0; } #calApp .ag-ev:hover { background: var(--mp-bg); }
+#calApp .ag-time { width: 128px; flex: none; font-size: .8rem; color: var(--mp-muted); } #calApp .ag-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); flex: none; }
+#calApp .ag-t { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #calApp .ag-cal { font-size: .75rem; color: var(--mp-muted); white-space: nowrap; }
+#calApp .cal-empty { height: 100%; display: grid; place-content: center; justify-items: center; gap: .6rem; text-align: center; color: var(--mp-muted); padding: 2rem; } #calApp .cal-empty i { font-size: 2.2rem; color: #C3CCDD; }
+
+/* ---- mobile month list ---- */
+#calApp .ml { border-top: 1px solid var(--mp-border); padding: .8rem 1rem 5rem; }
+#calApp .ml-h { display: flex; align-items: center; justify-content: space-between; font-weight: 700; margin-bottom: .5rem; }
+
+/* ---- popover ---- */
+#calApp .ev-pop { position: fixed; z-index: 3100; width: 340px; max-width: calc(100vw - 24px); background: #fff; border-radius: 16px; box-shadow: 0 16px 48px rgba(17,24,39,.28); border: 1px solid var(--mp-border); animation: popIn .14s ease; }
+#calApp .pop-bar { display: flex; justify-content: flex-end; gap: .1rem; padding: .5rem .5rem 0; }
+#calApp .pop-body { padding: .2rem 1.1rem 1.1rem; }
+#calApp .pop-title { display: flex; align-items: flex-start; gap: .7rem; font-size: 1.2rem; font-weight: 700; line-height: 1.25; word-break: break-word; } #calApp .pop-swatch { width: 14px; height: 14px; border-radius: 4px; background: var(--c); flex: none; margin-top: .35rem; }
+#calApp .pop-when { margin: .25rem 0 .7rem 1.45rem; font-size: .86rem; color: #4B5563; }
+#calApp .pop-row { display: flex; gap: .8rem; font-size: .86rem; margin-top: .5rem; align-items: flex-start; } #calApp .pop-row > i { color: var(--mp-muted); width: 18px; text-align: center; margin-top: .1rem; flex: none; } #calApp .pop-row > div { min-width: 0; word-break: break-word; }
+#calApp .pop-del { display: flex; flex-wrap: wrap; gap: .4rem; padding: .7rem 1.1rem 1rem; border-top: 1px solid var(--mp-border); align-items: center; font-size: .82rem; }
+#calApp .pop-back { position: fixed; inset: 0; z-index: 3090; background: rgba(17,24,39,.4); }
+@keyframes popIn { from { opacity: 0; transform: scale(.97) translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ---- floating button, editor ---- */
+#calApp .cal-fab { position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 1035; width: 56px; height: 56px; border-radius: 18px; border: 0; background: var(--mp-primary); color: #fff; font-size: 1.5rem; display: grid; place-items: center; box-shadow: 0 8px 22px rgba(37,99,235,.4); }
+#calApp .ev-title-input { width: 100%; border: 0; border-bottom: 2px solid var(--mp-border); font-size: 1.35rem; font-weight: 600; padding: .35rem 0; margin-bottom: 1rem; outline: 0; background: transparent; } #calApp .ev-title-input:focus { border-bottom-color: var(--mp-primary); } #calApp .ev-title-input.is-invalid { border-bottom-color: var(--mp-danger); }
+#calApp .ev-row { display: flex; gap: .9rem; margin-bottom: .9rem; align-items: flex-start; } #calApp .ev-row > i { width: 20px; text-align: center; color: var(--mp-muted); margin-top: .55rem; flex: none; }
+#calApp .ev-col { flex: 1; min-width: 0; }
+#calApp .ev-dt { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; } #calApp .ev-dt .form-control { width: auto; flex: 1 1 0; min-width: 0; } #calApp .ev-lab { width: 46px; font-size: .78rem; color: var(--mp-muted); flex: none; }
+#calApp .ev-swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; background: var(--mp-primary); display: inline-block; }
+#calApp .rm-r { display: flex; align-items: center; gap: .4rem; margin-bottom: .4rem; } #calApp .rm-n { width: 76px !important; flex: none; } #calApp .rm-u { width: auto !important; } #calApp .rm-b { font-size: .84rem; color: var(--mp-muted); }
+#calApp .ev-lead { position: relative; } #calApp .ev-chip { display: inline-flex; align-items: center; gap: .3rem; background: var(--mp-primary-soft); color: var(--mp-primary); border-radius: 999px; padding: .15rem .3rem .15rem .8rem; font-weight: 600; font-size: .86rem; margin-bottom: .3rem; }
+#calApp .ev-lead-res { position: absolute; left: 0; right: 0; top: 100%; z-index: 10; background: #fff; border: 1px solid var(--mp-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(17,24,39,.15); padding: .3rem; max-height: 220px; overflow-y: auto; }
+#calApp .ev-lead-opt { display: block; width: 100%; text-align: left; border: 0; background: none; padding: .45rem .6rem; border-radius: 8px; font-size: .86rem; } #calApp .ev-lead-opt:hover { background: var(--mp-bg); } #calApp .ev-lead-opt small { color: var(--mp-muted); margin-left: .4rem; }
+#calApp .ev-delchoice { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; width: 100%; font-size: .84rem; margin-bottom: .2rem; }
+#calApp .swatches { display: flex; flex-wrap: wrap; gap: .5rem; } #calApp .sw { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; background: var(--c); box-shadow: 0 0 0 1px var(--mp-border); padding: 0; display: grid; place-items: center; color: #fff; font-size: .8rem; } #calApp .sw.is-on { box-shadow: 0 0 0 2px var(--c); } #calApp .sw:focus-visible { outline: 2px solid var(--mp-primary); outline-offset: 2px; }
+#calApp .sw-custom { position: relative; overflow: hidden; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); } #calApp .sw-custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+#calApp .invalid-feedback[data-for], #calApp .ev-col > .invalid-feedback { display: none; } #calApp .invalid-feedback.d-block { display: block; }
+
+/* ---- responsive ---- */
+@media (max-width: 991.98px) {
+  #calApp .cal-shell { grid-template-columns: minmax(0, 1fr); height: calc(100dvh - var(--mp-topbar-h) - 2rem); }
+}
+@media (max-width: 767.98px) {
+  #calApp { --gut: 44px; }
+  #calApp .cal-bar { padding: .55rem .7rem; gap: .4rem; }
+  #calApp .cal-title { font-size: 1rem; order: 5; flex-basis: 100%; margin: 0 .2rem; }
+  #calApp .cal-tools { margin-left: auto; } #calApp .cal-seg > button { padding: .34rem .55rem; font-size: .78rem; }
+  #calApp .cal-main { overflow-y: auto; }
+  #calApp[data-view="month"] .cal-stage { flex: none; overflow: visible; }
+  #calApp .mv-grid { grid-template-rows: repeat(var(--rows), minmax(52px, auto)); } #calApp .mc { min-height: 52px; }
+  #calApp .mc-ev { display: none; } #calApp .mc-dots { display: flex; }
+  #calApp .mc.is-sel:not(.is-today) { background: var(--mp-primary-soft); }
+  #calApp .tg-num { min-width: 28px; height: 28px; font-size: .95rem; }
+  #calApp .ag { padding: .3rem .8rem 5rem; } #calApp .ag-day { gap: .6rem; } #calApp .ag-date { width: 46px; } #calApp .ag-time { width: 86px; font-size: .74rem; } #calApp .ag-cal { display: none; }
+  #calApp .ev-pop { left: 0 !important; right: 0; top: auto !important; bottom: 0; width: 100%; max-width: none; border-radius: 20px 20px 0 0; max-height: 82vh; overflow-y: auto; animation: sheetIn .2s ease; }
+  #calApp .ev-dt { flex-wrap: wrap; }
+}
+@keyframes sheetIn { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #calApp * { animation: none !important; transition: none !important; } }
+@media (min-width: 768px) { #calApp .pop-back { background: transparent; } }
+#calApp .te-s { overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- modals: the <form> wraps header/body/footer, so it has to be the flex column that makes the body scroll ---- */
+#calApp .modal-dialog-scrollable .modal-content > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; max-height: 100%; overflow: hidden; }
+#calApp .modal-dialog-scrollable .modal-content > form > .modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+#calApp .modal-dialog-scrollable .modal-content > form > .modal-header, #calApp .modal-dialog-scrollable .modal-content > form > .modal-footer { flex: none; }
+#calApp .modal-dialog-scrollable { max-height: calc(100% - 1rem); }

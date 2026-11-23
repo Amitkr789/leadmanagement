@@ -18,6 +18,12 @@ return [
     'app_secret' => env('META_APP_SECRET'),
     'page_access_token' => env('META_PAGE_ACCESS_TOKEN'),
 ],
+'google' => [
+    'enabled'       => env('GOOGLE_LOGIN_ENABLED', false),
+    'client_id'     => env('GOOGLE_CLIENT_ID'),
+    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    'redirect'      => env('GOOGLE_REDIRECT_URI'),
+],
 'openai' => [
     'key' => env('OPENAI_API_KEY'),
 ],
