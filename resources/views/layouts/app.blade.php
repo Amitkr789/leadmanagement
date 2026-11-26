@@ -23,6 +23,27 @@
 </div>
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastStack" style="z-index:1080"></div>
 <script>
+  /* Safety net: the alarm popup below does nothing (silently) when these configs are missing.
+     They normally come from partials/sidebar.blade.php; defining them here too means a sidebar
+     swap can never switch the reminder alarm / task bell off again. */
+  window.GLOBAL_REMINDER_CONFIG = window.GLOBAL_REMINDER_CONFIG || {
+    csrfToken: '{{ csrf_token() }}',
+    routes: {
+      reminderCheck: '{{ route('leads.reminders.check') }}',
+      reminderStatus: '{{ url('admin/leads/reminders') }}/__ID__/status',
+      leadsPage: '{{ url('admin/leads') }}',
+    }
+  };
+  window.TASK_NOTIF_CONFIG = window.TASK_NOTIF_CONFIG || {
+    csrfToken: '{{ csrf_token() }}',
+    routes: {
+      check: '{{ route('tasks.notifications.check') }}',
+      read:  '{{ route('tasks.notifications.read') }}',
+      tasksPage: '{{ url('admin/tasks') }}',
+    }
+  };
+</script>
+<script>
   $.ajaxSetup({
     headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

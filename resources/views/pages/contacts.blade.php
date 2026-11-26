@@ -162,7 +162,7 @@
     else {
       list = `<div class="lh-sect"><div class="lh-sect-h"><i class="bi bi-funnel"></i>Leads (${r.leads.length})</div>` + r.leads.map(l => {
         const who = (l.assigned_admins || []).map(a => a.name).join(", ");
-        return `<a class="lh-list-item" href="${esc(CFG.leadsUrl)}?lead=${l.id}">
+        return `<a class="lh-list-item" href="${esc(CFG.leadsUrl)}/${l.id}/view">
           <div class="grow"><div class="t">${esc(l.product_name || "Lead #" + l.id)}</div>
           <div class="s">${esc([l.source, D.fmtDate(l.created_at), who].filter(Boolean).join(" · "))}</div></div>
           <div class="end">${D.pill(l.lead_type)}<i class="bi bi-chevron-right text-muted"></i></div></a>`;

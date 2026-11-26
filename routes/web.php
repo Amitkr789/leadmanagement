@@ -1,6 +1,10 @@
 <?php
 use App\Http\Controllers\Console\AuthController as Console;
 use App\Http\Controllers\Console\CompanyController;
+use App\Http\Controllers\Console\PlanModuleController;
+
+
+
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\AuthController;
@@ -21,9 +25,11 @@ use App\Http\Controllers\CompanyOpenController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DealController;
 use App\Http\Controllers\WorkspaceController;
-
+use App\Http\Controllers\DealRecordController;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\SignInMethodsController;
+use App\Http\Controllers\SupportTicketController;
+
 use App\Http\Controllers\Console\{
     DirectoryController,
     CashfreeSettingsController,
@@ -84,6 +90,29 @@ Route::post('/profile/google/unlink', [SignInMethodsController::class, 'unlinkGo
 
 Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 
+
+
+
+Route::prefix('tickets')->name('tickets.')->group(function () {
+    Route::get('/',        [SupportTicketController::class, 'page'])->name('index');
+    Route::get('/data',    [SupportTicketController::class, 'data'])->name('data');
+    Route::get('/lookup',  [SupportTicketController::class, 'lookup'])->name('lookup');      // record picker of the create modal
+    Route::get('/for/{type}/{id}', [SupportTicketController::class, 'forRecord'])->name('for'); // tickets of a deal/lead/contact/company
+    Route::post('/',       [SupportTicketController::class, 'store'])->name('store');
+
+    Route::get('/{id}',            [SupportTicketController::class, 'show'])->whereNumber('id')->name('show');
+    Route::patch('/{id}',          [SupportTicketController::class, 'patch'])->whereNumber('id')->name('patch');
+    Route::post('/{id}/messages',  [SupportTicketController::class, 'storeMessage'])->whereNumber('id')->name('messages.store');
+    Route::delete('/{id}',         [SupportTicketController::class, 'destroy'])->whereNumber('id')->name('destroy');
+});
+
+
+
+
+
+
+
+
 Route::prefix('deals')->name('deals.')->group(function () {
     Route::get('/',                 [DealController::class, 'page'])->name('index');
     Route::get('/data',             [DealController::class, 'data'])->name('data');
@@ -92,9 +121,43 @@ Route::prefix('deals')->name('deals.')->group(function () {
     Route::patch('/{id}',           [DealController::class, 'patch'])->name('patch');
     Route::patch('/{id}/stage',     [DealController::class, 'updateStage'])->name('stage');
     Route::delete('/{id}',          [DealController::class, 'destroy'])->name('destroy');
+    
+    // activities + files (static prefixes first)
+    Route::patch('/activities/{id}',   [DealRecordController::class, 'updateActivity'])->whereNumber('id')->name('activities.update');
+    Route::delete('/activities/{id}',  [DealRecordController::class, 'destroyActivity'])->whereNumber('id')->name('activities.destroy');
+    Route::delete('/attachments/{id}', [DealRecordController::class, 'destroyAttachment'])->whereNumber('id')->name('attachments.destroy');
+
+    // single deal
+    Route::get('/{id}',                [DealRecordController::class, 'show'])->whereNumber('id')->name('show');        // full record page
+    Route::get('/{id}/record',         [DealRecordController::class, 'record'])->whereNumber('id')->name('record');    // JSON refresh
+    Route::post('/{id}/activities',    [DealRecordController::class, 'storeActivity'])->whereNumber('id')->name('activities.store');
+    Route::post('/{id}/attachments',   [DealRecordController::class, 'storeAttachment'])->whereNumber('id')->name('attachments.store');
+    Route::patch('/{id}/stage',        [DealController::class, 'updateStage'])->whereNumber('id')->name('stage');
+    Route::patch('/{id}',              [DealController::class, 'patch'])->whereNumber('id')->name('patch');
+    Route::delete('/{id}',             [DealController::class, 'destroy'])->whereNumber('id')->name('destroy');
 });
 
 
+// contacts + companies (the lead is created from these)
+Route::get('/leads/contacts/search', [LeadDirectoryController::class, 'contactsSearch'])->name('leads.contacts.search');
+Route::post('/leads/contacts', [LeadDirectoryController::class, 'contactStore'])->name('leads.contacts.store');
+Route::get('/leads/companies/search', [LeadDirectoryController::class, 'companiesSearch'])->name('leads.companies.search');
+Route::post('/leads/companies', [LeadDirectoryController::class, 'companyStore'])->name('leads.companies.store');
+Route::patch('/leads/companies/{id}', [LeadDirectoryController::class, 'companyUpdate'])->name('leads.companies.update');
+// deal picker in the create-lead flow (keep above any  /leads/{id}  GET route)
+Route::get('/leads/deals/search', [LeadDirectoryController::class, 'dealsSearch'])->name('leads.deals.search');
+
+// bulk status change from the table's selection bar
+Route::post('/leads/bulk-type', [LeadManageController::class, 'bulkType'])->name('leads.bulkType');
+
+// click-to-edit in the drawer (partial update of one or more fields)
+Route::patch('/leads/{id}', [LeadManageController::class, 'patch'])->name('leads.patch');
+
+// full lead page — opens when a lead's name is clicked anywhere (contents come later)
+Route::get('/leads/{id}/view', [LeadManageController::class, 'view'])->whereNumber('id')->name('leads.profile');
+
+// snooze / reschedule a follow-up
+Route::patch('/leads/reminders/{id}', [LeadManageController::class, 'updateReminder'])->whereNumber('id')->name('leads.reminders.update');
 // Contacts directory
 Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
 Route::get('/contacts/data', [ContactController::class, 'data'])->name('contacts.data');
@@ -375,9 +438,20 @@ Route::prefix(config('console.path'))->name('console.')->middleware('console.gat
     Route::post('login', [Console::class, 'login'])->middleware('throttle:10,1')->name('login.store');
     Route::get('two-factor', [Console::class, 'showTwoFactor'])->name('2fa');
     Route::post('two-factor', [Console::class, 'verifyTwoFactor'])->middleware('throttle:10,1')->name('2fa.verify');
-
+Route::get('modules', [PlanModuleController::class, 'index'])->name('modules.index');
+Route::post('modules', [PlanModuleController::class, 'store'])->name('modules.store');
+Route::put('modules/{module}', [PlanModuleController::class, 'update'])->name('modules.update');
+Route::patch('modules/{module}/status', [PlanModuleController::class, 'status'])->name('modules.status');
+Route::delete('modules/{module}', [PlanModuleController::class, 'destroy'])->name('modules.destroy');
     Route::middleware('console.auth')->group(function () {
         Route::get('/', fn () => view('superadminconsole.pages.console.dashboard'))->name('dashboard');
+        Route::patch('/plans/{plan}/status', [PlanController::class, 'changeStatus'])
+    ->name('plans.status');
+    Route::post('plan-modules', [PlanModuleController::class, 'store'])->name('modules.store');
+Route::delete('plan-modules/{module}', [PlanModuleController::class, 'destroy'])->name('modules.destroy');
+
+Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])
+    ->name('plans.destroy');
         Route::get('companies', [CompanyController::class, 'index'])->name('companies.index');
         Route::get('trials', [TrialController::class, 'index'])->name('trials.index');
         Route::get('directory', [DirectoryController::class, 'index'])->name('directory.index');

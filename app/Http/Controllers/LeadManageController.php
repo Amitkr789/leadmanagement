@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Admin;
 use App\Models\Company;
 use App\Models\Contact;
+use App\Models\Deal;
 use App\Models\Lead;
 use App\Models\LeadAttachment;
 use App\Models\LeadReminder;
@@ -67,6 +68,8 @@ class LeadManageController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $this->attachDeals($leads, $admin);
+
         return response()->json([
             'success' => true,
             'leads' => $leads,
@@ -90,7 +93,7 @@ class LeadManageController extends Controller
 
         $admin = $this->currentAdmin();
 
-        $lead = DB::transaction(function () use ($request, $admin) {
+        $result = DB::transaction(function () use ($request, $admin) {
             if ($request->filled('contact_id')) {
                 $contact = Contact::visibleTo($admin)->findOrFail($request->contact_id);
             } else {
@@ -111,6 +114,33 @@ class LeadManageController extends Controller
                 $contact->update(['company_id' => $company->id]);
             }
 
+            // Deal: a deal is tied to a lead through the lead's CONTACT (deal <-> contacts), so linking = adding the contact.
+            $deal = null;
+            if ($request->filled('deal_id')) {
+                $deal = Deal::visibleTo($admin)->findOrFail($request->deal_id);
+                $deal->contacts()->syncWithoutDetaching([$contact->id]);
+                if ($company && !$deal->company_id) {
+                    $deal->update(['company_id' => $company->id]);
+                }
+            } elseif ($request->filled('new_deal.name')) {
+                $nd   = $request->input('new_deal');
+                $deal = Deal::create([
+                    'name'        => trim($nd['name']),
+                    'amount'      => $nd['amount'] ?? 0,
+                    'stage'       => $nd['stage'],
+                    'probability' => Deal::STAGES[$nd['stage']]['probability'],
+                    'priority'    => $nd['priority'] ?? 'medium',
+                    'deal_type'   => $nd['deal_type'] ?? null,
+                    'source'      => $nd['source'] ?? null,
+                    'close_date'  => $nd['close_date'] ?? null,
+                    'description' => $nd['description'] ?? null,
+                    'owner_id'    => $admin->id,
+                    'company_id'  => $company?->id,
+                    'created_by'  => $admin->id,
+                ]);
+                $deal->contacts()->sync([$contact->id]);
+            }
+
             $lead = Lead::create([
                 'customer_name'   => $contact->name,
                 'email'           => $contact->email,
@@ -120,7 +150,7 @@ class LeadManageController extends Controller
                 'company_id'      => $company?->id,
                 'company_name'    => $company?->name,
                 'gst_number'      => $company?->gst_number,
-                'product_name'    => $request->product_name ?? '',
+                'product_name'    => trim((string) $request->product_name) !== '' ? $request->product_name : ($deal?->name ?? ''),
                 'source'          => $request->source,
                 'social_platform' => $request->source === 'Social Media' ? $request->social_platform : null,
                 'lead_type'       => $request->lead_type,
@@ -129,12 +159,20 @@ class LeadManageController extends Controller
 
             $lead->assignedAdmins()->sync($request->input('assigned_admins', []));
 
-            return $lead;
+            return [$lead, $deal, $request->filled('deal_id')];
         });
 
-        $lead->load($this->leadRelations());
+        [$lead, $deal, $linkedExisting] = $result;
 
-        return response()->json(['success' => true, 'message' => 'Lead added successfully.', 'lead' => $lead]);
+        $lead->load($this->leadRelations());
+        $this->attachDeals([$lead], $admin);
+
+        $message = 'Lead added successfully.';
+        if ($deal) {
+            $message = $linkedExisting ? 'Lead added and linked to the deal "' . $deal->name . '".' : 'Lead and deal created.';
+        }
+
+        return response()->json(['success' => true, 'message' => $message, 'lead' => $lead, 'deal_id' => $deal?->id]);
     }
 
     /* ==================== UPDATE ==================== */
@@ -177,6 +215,17 @@ class LeadManageController extends Controller
             'whatsapp' => 'nullable|string|max:20',
             'company_id' => 'nullable|integer|exists:companies,id',
             'product_name' => 'nullable|string|max:255',
+            // creating only: link an existing deal, or create a new one together with the lead
+            'deal_id' => $creating ? 'nullable|integer|exists:deals,id|prohibits:new_deal' : 'prohibited',
+            'new_deal' => $creating ? 'nullable|array' : 'prohibited',
+            'new_deal.name' => 'required_with:new_deal|string|max:255',
+            'new_deal.stage' => 'required_with:new_deal|in:' . implode(',', Deal::OPEN_STAGES),
+            'new_deal.amount' => 'nullable|numeric|min:0|max:99999999999',
+            'new_deal.close_date' => 'nullable|date',
+            'new_deal.priority' => 'nullable|in:' . implode(',', Deal::PRIORITIES),
+            'new_deal.deal_type' => 'nullable|in:' . implode(',', Deal::TYPES),
+            'new_deal.source' => 'nullable|string|max:50',
+            'new_deal.description' => 'nullable|string|max:5000',
             'source' => 'required|string|max:50',
             'social_platform' => 'nullable|string|max:50',
             'lead_type' => 'required|in:' . implode(',', Lead::LEAD_TYPES),
@@ -374,7 +423,89 @@ class LeadManageController extends Controller
             ])
             ->findOrFail($id);
 
+        $this->attachDeals([$lead], $admin);
+
         return response()->json(['success' => true, 'lead' => $lead]);
+    }
+
+    /* ==================== LEAD PROFILE PAGE ====================
+       Full page that opens when a lead's name is clicked anywhere in the CRM.
+       GET /admin/leads/{id}/view  (route name: leads.profile) */
+
+    public function view($id)
+    {
+        $admin = $this->currentAdmin();
+
+        $lead = Lead::visibleTo($admin)->with($this->leadRelations())->findOrFail($id);
+        $this->attachDeals([$lead], $admin);
+
+        return view('pages.lead-view', [
+            'lead'         => $lead,
+            'leadTypes'    => Lead::LEAD_TYPES,
+            'isSuperAdmin' => $admin->role === 'super_admin',
+        ]);
+    }
+
+    /* ==================== DEALS LINKED TO A LEAD ====================
+       A deal is tied to a lead through the lead's CONTACT (deal <-> contacts), and more loosely through the
+       lead's COMPANY (same company on the deal). Each lead gets a `linked_deals` array — id, name, amount,
+       stage, close date, owner and `via` ("contact" | "company") — used for the deal links on the leads page.
+       Never breaks the page: if deals can't be read, the lead simply has none. */
+
+    private function attachDeals($leads, Admin $admin): void
+    {
+        $leads = collect($leads)->filter()->values();
+        foreach ($leads as $l) {
+            $l->setAttribute('linked_deals', []);
+        }
+
+        $contactIds = $leads->pluck('contact_id')->filter()->unique()->values()->all();
+        $companyIds = $leads->pluck('company_id')->filter()->unique()->values()->all();
+        if (! $contactIds && ! $companyIds) {
+            return;
+        }
+
+        try {
+            $deals = Deal::visibleTo($admin)
+                ->where(function ($q) use ($contactIds, $companyIds) {
+                    if ($contactIds) {
+                        $q->whereHas('contacts', fn ($c) => $c->whereIn('contacts.id', $contactIds));
+                    }
+                    if ($companyIds) {
+                        $q->orWhereIn('company_id', $companyIds);
+                    }
+                })
+                ->with(['contacts:id', 'owner:id,name'])
+                ->orderByDesc('id')
+                ->get(['id', 'name', 'amount', 'stage', 'priority', 'close_date', 'owner_id', 'company_id']);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return;
+        }
+
+        foreach ($leads as $l) {
+            $mine = [];
+            foreach ($deals as $d) {
+                $viaContact = $l->contact_id && $d->contacts->contains('id', $l->contact_id);
+                $viaCompany = $l->company_id && (int) $d->company_id === (int) $l->company_id;
+                if (! $viaContact && ! $viaCompany) {
+                    continue;
+                }
+                $mine[] = [
+                    'id'          => $d->id,
+                    'name'        => $d->name,
+                    'amount'      => (float) $d->amount,
+                    'stage'       => $d->stage,
+                    'stage_label' => data_get(Deal::STAGES, $d->stage . '.label') ?: ucwords(str_replace('_', ' ', (string) $d->stage)),
+                    'priority'    => $d->priority,
+                    'close_date'  => $d->close_date instanceof \DateTimeInterface ? $d->close_date->format('Y-m-d') : $d->close_date,
+                    'owner'       => $d->owner?->name,
+                    'via'         => $viaContact ? 'contact' : 'company',
+                ];
+            }
+            $l->setAttribute('linked_deals', $mine);
+        }
     }
 
     /* ==================== ATTACHMENTS ====================
@@ -479,6 +610,38 @@ class LeadManageController extends Controller
             'message' => $type === 'note' ? 'Note added.' : 'Reminder added.',
             'reminder' => $reminder,
         ]);
+    }
+
+    /** Snooze / reschedule a follow-up (and optionally edit its text or type). Reopens it as "scheduled". */
+    public function updateReminder(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'note' => 'sometimes|required|string|max:1000',
+            'reminder_date' => 'required|date',
+            'reminder_time' => 'nullable|date_format:H:i',
+            'appointment_type' => 'sometimes|nullable|in:whatsapp,meeting',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors(), 'message' => $validator->errors()->first()], 422);
+        }
+
+        $admin = $this->currentAdmin();
+        $reminder = LeadReminder::whereHas('lead', fn ($q) => $q->visibleTo($admin))
+            ->visibleTo($admin)
+            ->findOrFail($id);
+
+        if (($reminder->type ?? 'reminder') === 'note') {
+            return response()->json(['success' => false, 'message' => 'A note has no date to change.'], 422);
+        }
+
+        foreach ($validator->validated() as $key => $value) {
+            $reminder->{$key} = $value;
+        }
+        $reminder->status = 'scheduled';
+        $reminder->save();
+
+        return response()->json(['success' => true, 'message' => 'Follow-up rescheduled.', 'reminder' => $reminder]);
     }
 
     public function updateReminderStatus(Request $request, $id)

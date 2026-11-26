@@ -140,7 +140,7 @@
     if (!r.leads) return `<div class="lh-sect"><div class="lh-hint p-3">Loading leads…</div></div>`;
     if (!r.leads.length) return `<div class="lh-sect"><div class="lh-hint p-3">No leads for this company yet. Create one from a contact.</div></div>`;
     return `<div class="lh-sect"><div class="lh-sect-h"><i class="bi bi-funnel"></i>Leads (${r.leads.length})</div>` + r.leads.map(l =>
-      `<a class="lh-list-item" href="${esc(CFG.leadsUrl)}?lead=${l.id}">${D.avatarHtml(l.customer_name, "sm")}
+      `<a class="lh-list-item" href="${esc(CFG.leadsUrl)}/${l.id}/view">${D.avatarHtml(l.customer_name, "sm")}
         <div class="grow"><div class="t">${esc(l.customer_name)}</div><div class="s">${esc([l.product_name, l.source, D.fmtDate(l.created_at)].filter(Boolean).join(" · "))}</div></div>
         <div class="end">${D.pill(l.lead_type)}<i class="bi bi-chevron-right text-muted"></i></div></a>`).join("") + "</div>";
   }

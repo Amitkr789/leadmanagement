@@ -55,6 +55,7 @@
 <script src="{{ asset('assets/js/company-modal.js') }}"></script>
 <script src="{{ asset('assets/js/payments-settings.js') }}"></script>
 <script src="{{ asset('assets/js/cashfree-settings.js') }}"></script>
+<script src="{{ asset('assets/js/module-manager.js') }}"></script>
 
 <script>
   // Auto-apply filters: selects instantly, search after a short pause

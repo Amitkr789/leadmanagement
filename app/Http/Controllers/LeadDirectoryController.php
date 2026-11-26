@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Admin;
 use App\Models\Company;
 use App\Models\Contact;
+use App\Models\Deal;
 use App\Models\Lead;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -114,6 +115,46 @@ class LeadDirectoryController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Contact created.', 'contact' => $contact->load('company:id,name')->loadCount('leads')]);
+    }
+
+    /* ==================== DEALS (picker in the create-lead flow) ==================== */
+
+    /** Search the deals this admin can see — by deal name, company or contact. Open deals first. */
+    public function dealsSearch(Request $request): JsonResponse
+    {
+        $admin     = $this->admin();
+        $q         = trim((string) $request->query('q', ''));
+        $contactId = (int) $request->query('contact_id', 0);
+
+        $query = Deal::visibleTo($admin)->with(['company:id,name', 'owner:id,name'])->withCount('contacts');
+
+        if ($contactId) {
+            $query->withCount(['contacts as has_contact' => fn ($c) => $c->where('contacts.id', $contactId)]);
+        }
+
+        if ($q !== '') {
+            $like = $this->like($q);
+            $query->where(function ($w) use ($like) {
+                $w->where('name', 'like', $like)
+                    ->orWhereHas('company', fn ($c) => $c->where('name', 'like', $like))
+                    ->orWhereHas('contacts', fn ($c) => $c->where('name', 'like', $like));
+            });
+        }
+
+        $deals = $query->orderByRaw("CASE WHEN stage IN ('won','lost') THEN 1 ELSE 0 END")->orderByDesc('id')->limit(8)->get()->map(fn ($d) => [
+            'id'             => $d->id,
+            'name'           => $d->name,
+            'amount'         => (float) $d->amount,
+            'stage'          => $d->stage,
+            'stage_label'    => data_get(Deal::STAGES, $d->stage . '.label') ?: ucwords(str_replace('_', ' ', (string) $d->stage)),
+            'close_date'     => $d->close_date instanceof \DateTimeInterface ? $d->close_date->format('Y-m-d') : $d->close_date,
+            'company'        => $d->company ? ['id' => $d->company->id, 'name' => $d->company->name] : null,
+            'owner'          => $d->owner?->name,
+            'contacts_count' => (int) $d->contacts_count,
+            'has_contact'    => (int) ($d->has_contact ?? 0) > 0,
+        ]);
+
+        return response()->json(['success' => true, 'deals' => $deals]);
     }
 
     /* ==================== COMPANIES ==================== */

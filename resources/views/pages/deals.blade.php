@@ -398,6 +398,8 @@
     #dlCreateModal .modal-content { min-height: 100vh; border-radius: 0; }
   }
   @media (prefers-reduced-motion: reduce) { .dl-pop, .dl-skel td > span { animation: none; } }
+  a.dl-name-text, .dl-name-link { text-decoration: none; color: var(--primary); }
+.dl-name-link:hover { text-decoration: underline; }
 </style>
 
 <div class="page-content">
@@ -574,6 +576,7 @@
       contactStore: '{{ route('leads.contacts.store') }}',
       companiesSearch: '{{ route('leads.companies.search') }}',
       companyStore: '{{ route('leads.companies.store') }}',
+      show: '{{ url('admin/deals') }}/__ID__',
     }
   };
 
@@ -660,6 +663,7 @@
   const reqJson = (u, method, body) => apiFetch(u, { method, headers: csrfHeaders({ "Content-Type": "application/json", "Accept": "application/json" }), body: JSON.stringify(body || {}) });
   const url = (key, id) => CFG.routes[key].replace("__ID__", id);
   const firstErr = (res, fb) => (res && (res.message || (res.errors && Object.values(res.errors)[0][0]))) || fb;
+  const dealUrl = id => url("show", id);
 
   /* ---------------- state ---------------- */
 
@@ -885,7 +889,7 @@
 
   function nameCell(d) {
     return `<div class="dl-name"><span class="dl-ic"><i class="bi bi-briefcase"></i></span>
-      <span class="dl-name-col"><span class="dl-name-text">${esc(d.name)}</span><span class="dl-name-sub">${esc(money(d.amount) + " · " + stLabel(d.stage))}</span></span></div>`;
+      <span class="dl-name-col"><a class="dl-name-text" href="${esc(dealUrl(d.id))}" title="Open deal">${esc(d.name)}</a><span class="dl-name-sub">${esc(money(d.amount) + " · " + stLabel(d.stage))}</span></span></div>`;
   }
   function renderTable(list) {
     const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
@@ -955,7 +959,7 @@
   function boardCard(d) {
     const c = d.contacts || [];
     return `<div class="dl-card-k" draggable="true" data-id="${d.id}">
-      <div class="nm">${esc(d.name)}</div>
+      <div class="nm"><a class="dl-name-link" href="${esc(dealUrl(d.id))}">${esc(d.name)}</a></div>
       <button type="button" class="dl-rowbtn menu" data-act="cardmenu" data-id="${d.id}" aria-label="More"><i class="bi bi-three-dots"></i></button>
       <div class="amt">${money(d.amount)}</div>
       ${d.company ? `<div class="ln"><i class="bi bi-building"></i><span>${esc(d.company.name)}</span></div>` : ""}
@@ -1219,6 +1223,7 @@
   function bindBoard() {
     const board = $("dlBoard");
     board.addEventListener("click", e => {
+      if (e.target.closest("a")) return;
       const act = e.target.closest("[data-act]");
       if (act) {
         const a = act.dataset.act;
@@ -1455,6 +1460,7 @@
       <div class="dl-dr-bar"><span class="crumb"><i class="bi bi-briefcase"></i>Deal</span>${idx >= 0 ? `<span class="pos">${idx + 1} of ${orderIds.length}</span>` : ""}<span class="sp"></span>
         <button type="button" class="dl-iconbtn" data-dr="prev" ${idx <= 0 ? "disabled" : ""} title="Previous deal (Alt + ↑)" aria-label="Previous deal"><i class="bi bi-chevron-up"></i></button>
         <button type="button" class="dl-iconbtn" data-dr="next" ${idx < 0 || idx >= orderIds.length - 1 ? "disabled" : ""} title="Next deal (Alt + ↓)" aria-label="Next deal"><i class="bi bi-chevron-down"></i></button>
+      <a class="dl-iconbtn" href="${esc(dealUrl(d.id))}" title="Open full record" aria-label="Open full record"><i class="bi bi-box-arrow-up-right"></i></a>
         <button type="button" class="dl-iconbtn" data-dr="copylink" title="Copy link" aria-label="Copy link"><i class="bi bi-link-45deg"></i></button>
         <button type="button" class="dl-iconbtn danger" data-dr="delete" title="Delete" aria-label="Delete"><i class="bi bi-trash"></i></button>
         <button type="button" class="dl-iconbtn" data-bs-dismiss="offcanvas" aria-label="Close"><i class="bi bi-x-lg"></i></button>

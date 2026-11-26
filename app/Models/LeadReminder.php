@@ -21,7 +21,8 @@ class LeadReminder extends Model
     ];
 
     protected $casts = [
-        'reminder_date' => 'date',
+        'reminder_date' => 'date:Y-m-d',
+      
     ];
 
     public function lead(): BelongsTo

@@ -25,6 +25,10 @@
             ['key' => 'deals',     'label' => 'Deals',      'icon' => 'briefcase',         'href' => url('admin/deals'),      'kw' => 'opportunities sales'],
             ['key' => 'contacts',  'label' => 'Contacts',   'icon' => 'people',            'href' => url('admin/contacts'),   'kw' => 'people customers clients'],
             ['key' => 'companies', 'label' => 'Companies',  'icon' => 'building',          'href' => url('admin/companies'),  'kw' => 'organisations accounts gst'],
+
+            ['key' => 'tickets', 'label' => 'Support tickets',  'icon' => 'bi bi-life-preserver',          'href' => url('admin/tickets'),  'kw' => 'stock products vehicles', 'super' => true],
+
+
             ['key' => 'meta',      'label' => 'Meta Leads', 'icon' => 'megaphone',         'href' => url('admin/meta-leads'), 'kw' => 'facebook instagram ads', 'super' => true],
             ['key' => 'inventory', 'label' => 'Inventory',  'icon' => 'box-seam',          'href' => url('admin/inventory'),  'kw' => 'stock products vehicles', 'super' => true],
         ]],
@@ -221,9 +225,9 @@
 </style>
 <aside class="sidebar" id="sidebar" aria-label="Main navigation">
   <div class="sb-top">
-    <a class="sb-brand" href="{{ url('admin') }}" aria-label="JOJOEV home">
-      <span class="mark text-light">JE</span>
-      <span class="name">JOJOEV<small>CRM WORKSPACE</small></span>
+    <a class="sb-brand" href="{{ url('admin') }}" aria-label="LEADFLOW">
+      <span class="mark text-light">LF</span>
+      <span class="name">LEADFLOW<small>CRM WORKSPACE</small></span>
     </a>
     <button type="button" class="sb-iconbtn sb-rail-btn" id="sbRail" aria-pressed="false" aria-label="Collapse sidebar" data-tip="Collapse sidebar ( [ )"><i class="bi bi-chevron-double-left"></i></button>
   </div>
